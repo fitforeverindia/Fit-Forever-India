@@ -34,11 +34,11 @@ function mapRow(row: ProductRow): Product {
     compareAtPrice: row.compare_at_price ? Number(row.compare_at_price) : null,
     image: row.image_url ?? '',
     gallery: row.gallery_urls ?? [],
-    rating: Number(row.rating),
-    reviewCount: row.review_count,
+    rating: Number(row.rating || 5.0),
+    reviewCount: Number(row.review_count || 0),
     badge: row.badge,
-    featured: row.is_featured,
-    inStock: row.is_active,
+    featured: Boolean(row.is_featured),
+    inStock: Boolean(row.is_active),
     colorVariants: [],
     certifications: [],
   };
@@ -97,7 +97,12 @@ export async function getProducts(opts: {
     )
     .eq('is_active', true);
 
-  if (opts.featured) query = query.eq('is_featured', true);
+  if (opts.featured) {
+    query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+
   if (opts.limit) query = query.limit(opts.limit);
 
   const { data, error } = await query;

@@ -5,10 +5,27 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { ProductCard } from '@/components/store/product-card';
+import { useProductsStore } from '@/lib/products-store';
 import type { Product } from '@/lib/types';
 
-export function FeaturedProducts({ products }: { products: Product[] }) {
-  if (!products || products.length === 0) return null;
+export function FeaturedProducts({ products: initialProducts }: { products?: Product[] }) {
+  const { products: dynamicProducts } = useProductsStore();
+
+  // Combine initial server products and client dynamic store products
+  const allProducts = initialProducts && initialProducts.length > 0 ? initialProducts : dynamicProducts;
+
+  // Filter featured or available products so section never disappears in production
+  let featuredList = allProducts.filter((p) => p.featured);
+  if (featuredList.length === 0) {
+    featuredList = allProducts.filter((p) => p.inStock);
+  }
+  if (featuredList.length === 0) {
+    featuredList = allProducts;
+  }
+
+  const items = featuredList.slice(0, 8);
+
+  if (items.length === 0) return null;
 
   return (
     <section className="bg-secondary/50 py-8 sm:py-12">
@@ -37,7 +54,7 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
 
         {/* 2 Products per row on Mobile (grid-cols-2) */}
         <div className="mt-6 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {products.map((product, i) => (
+          {items.map((product, i) => (
             <Reveal key={product.id} delay={i * 0.05}>
               <ProductCard product={product} />
             </Reveal>
