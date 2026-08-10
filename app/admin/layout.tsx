@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { useAdminAuth } from '@/lib/admin-auth';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminHeader } from '@/components/admin/admin-header';
+import { SITE } from '@/lib/site';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,14 +26,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>;
   }
 
-  // Loading state during auth check
+  // White / Light theme Loading state during auth check matching the website
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center text-white">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-slate-400">
+      <div className="min-h-screen w-full bg-[#F4F5F7] flex flex-col items-center justify-center p-6 text-slate-900 select-none">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute h-20 w-20 rounded-full bg-primary/10 animate-ping" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-lg border border-slate-200">
+            <img src={SITE.logo} alt="Fit Forever India" className="h-full w-full object-cover rounded-xl" />
+          </div>
+        </div>
+        <div className="mt-6 flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-xs font-bold text-primary border border-primary/20">
+          <Sparkles className="h-3.5 w-3.5" />
+          Fit Forever Admin Console
+        </div>
+        <h3 className="mt-3 font-display text-lg font-bold text-slate-900">
           Loading Fit Forever Admin...
+        </h3>
+        <p className="mt-1 text-xs text-slate-500">
+          Syncing live inventory, Supabase database, and Cloudinary media assets.
         </p>
+        <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span>Authenticating session</span>
+        </div>
       </div>
     );
   }
@@ -56,7 +74,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     </div>
   );
-
-
-
 }

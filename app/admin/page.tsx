@@ -70,35 +70,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Top Banner / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary border border-primary/20">
-            <Sparkles className="h-3.5 w-3.5" />
-            Fit Forever Database Console
-          </div>
-          <h2 className="mt-3 font-display text-2xl font-bold text-slate-900 sm:text-3xl">
-            Store Performance & Database Analytics
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Real-time Supabase database catalog status, Cloudinary media storage, and registered customers.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button asChild size="sm" className="rounded-xl bg-primary font-bold text-primary-foreground hover:bg-primary/90 shadow-sm">
-            <Link href="/admin/products">
-              <Package className="mr-1.5 h-4 w-4" />
-              Manage Products ({totalProducts})
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="outline" className="rounded-xl border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100">
-            <Link href="/admin/categories">
-              <Layers className="mr-1.5 h-4 w-4 text-primary" />
-              Categories ({totalCategories})
-            </Link>
-          </Button>
-        </div>
-      </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

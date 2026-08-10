@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, KeyRound, Sparkles, Loader2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,9 +45,9 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 select-none">
-      {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#F4F5F7] flex items-center justify-center p-4 sm:p-6 lg:p-8 select-none">
+      {/* Subtle soft background accents matching website */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
 
       <motion.div
@@ -56,18 +56,18 @@ export default function AdminLoginPage() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Main Card Container */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
+        {/* Main Clean White Card Container */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xl sm:p-10">
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="inline-flex items-center gap-3">
               <img
                 src={SITE.logo}
                 alt="Fit Forever India"
-                className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/40"
+                className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/20 shadow-sm"
               />
               <div className="text-left">
-                <span className="font-display text-xl font-bold text-white tracking-tight">
+                <span className="font-display text-xl font-bold text-slate-900 tracking-tight">
                   Fit Forever
                 </span>
                 <span className="block text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">
@@ -76,16 +76,16 @@ export default function AdminLoginPage() {
               </div>
             </Link>
 
-            <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary border border-primary/20">
+            <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary border border-primary/20">
               <ShieldCheck className="h-3.5 w-3.5" />
               Fit Forever Console
             </div>
 
-            <h1 className="mt-4 font-display text-2xl font-bold text-white sm:text-3xl">
+            <h1 className="mt-4 font-display text-2xl font-bold text-slate-900 sm:text-3xl">
               Welcome Back
             </h1>
-            <p className="mt-2 text-xs text-slate-400">
-              Sign in with your administrator account to manage store catalog, customers, and Cloudinary media.
+            <p className="mt-2 text-xs text-slate-500">
+              Sign in with your administrator account to manage store inventory, orders, and customers.
             </p>
           </div>
 
@@ -94,7 +94,7 @@ export default function AdminLoginPage() {
             <button
               type="button"
               onClick={handleDemoFill}
-              className="flex w-full items-center justify-between rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3 text-xs font-medium text-primary transition-all hover:bg-primary/10 hover:border-primary/50"
+              className="flex w-full items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 text-xs font-semibold text-primary transition-all hover:bg-primary/10 hover:border-primary/60"
             >
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 shrink-0 text-primary" />
@@ -107,7 +107,7 @@ export default function AdminLoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase text-slate-300">
+              <Label className="text-xs font-semibold uppercase text-slate-700">
                 Admin Email
               </Label>
               <div className="relative">
@@ -118,13 +118,13 @@ export default function AdminLoginPage() {
                   placeholder="admin@fitforever.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-800/80 border-slate-700 text-white pl-10 h-11 text-xs rounded-xl focus:border-primary focus:ring-primary"
+                  className="bg-slate-50 border-slate-200 text-slate-900 pl-10 h-11 text-xs rounded-xl focus:bg-white focus:border-primary focus:ring-primary"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase text-slate-300">
+              <Label className="text-xs font-semibold uppercase text-slate-700">
                 Password
               </Label>
               <div className="relative">
@@ -135,12 +135,12 @@ export default function AdminLoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-800/80 border-slate-700 text-white pl-10 pr-10 h-11 text-xs rounded-xl focus:border-primary focus:ring-primary"
+                  className="bg-slate-50 border-slate-200 text-slate-900 pl-10 pr-10 h-11 text-xs rounded-xl focus:bg-white focus:border-primary focus:ring-primary"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-white"
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-700"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -150,10 +150,10 @@ export default function AdminLoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl bg-primary font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all mt-6"
+              className="w-full h-11 rounded-xl bg-primary font-bold text-white shadow-md shadow-primary/20 hover:bg-primary/90 transition-all mt-6"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
                   <span>Authenticating...</span>
                 </div>
@@ -167,10 +167,10 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Footer Back Link */}
-          <div className="mt-8 pt-6 border-t border-slate-800 text-center">
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary transition-colors"
             >
               ← Back to Main Fit Forever Store
             </Link>
