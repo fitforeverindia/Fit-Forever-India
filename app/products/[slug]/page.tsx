@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, notFound } from 'next/navigation';
 import {
@@ -17,6 +17,9 @@ import {
   Plus,
   Minus,
   Check,
+  Award,
+  Layers,
+  Box,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -24,33 +27,67 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/store/product-card';
 import { useStore } from '@/components/store/store-provider';
-import { SEED_PRODUCTS } from '@/lib/data';
+import { useProductsStore } from '@/lib/products-store';
 import { formatINR, discountPercent } from '@/lib/format';
 import { SITE } from '@/lib/site';
 import { cn } from '@/lib/utils';
-import type { Product } from '@/lib/types';
+import type { Product, ColorVariant } from '@/lib/types';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
 
-  // Find product by slug from SEED_PRODUCTS or database fallback
-  const product = SEED_PRODUCTS.find((p) => p.slug === slug) ?? SEED_PRODUCTS[0];
+  const { products } = useProductsStore();
+
+  // Find product by slug from dynamic store
+  const product = products.find((p) => p.slug === slug) ?? products[0];
 
   const { addToCart, toggleWishlist, isInWishlist } = useStore();
-  const wished = isInWishlist(product.id);
+  const wished = product ? isInWishlist(product.id) : false;
 
-  // Gallery state
-  const images = product.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
-  const [selectedImage, setSelectedImage] = useState(images[0]);
+  // Options & Color Variants State
+  const [selectedColorVariant, setSelectedColorVariant] = useState<ColorVariant | null>(
+    product?.colorVariants && product.colorVariants.length > 0 ? product.colorVariants[0] : null
+  );
 
-  // Options state
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  // Gallery state - reactive to selected color variant!
+  const currentGallery =
+    selectedColorVariant && selectedColorVariant.imageUrls && selectedColorVariant.imageUrls.length > 0
+      ? selectedColorVariant.imageUrls
+      : product?.gallery && product.gallery.length > 0
+      ? product.gallery
+      : [product?.image || ''];
+
+  const [selectedImage, setSelectedImage] = useState<string>(currentGallery[0] || product?.image || '');
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping'>('description');
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'logistics'>('description');
+
+  // Update selected image when color variant changes
+  useEffect(() => {
+    if (product?.colorVariants && product.colorVariants.length > 0) {
+      const first = product.colorVariants[0];
+      setSelectedColorVariant(first);
+      if (first.imageUrls && first.imageUrls.length > 0) {
+        setSelectedImage(first.imageUrls[0]);
+      }
+    } else if (product) {
+      setSelectedImage(product.image);
+    }
+  }, [product]);
+
+  if (!product) {
+    return notFound();
+  }
 
   const discount = discountPercent(product.price, product.compareAtPrice);
+
+  const handleSelectColorVariant = (variant: ColorVariant) => {
+    setSelectedColorVariant(variant);
+    if (variant.imageUrls && variant.imageUrls.length > 0) {
+      setSelectedImage(variant.imageUrls[0]);
+    }
+    toast.info(`Selected color variant: ${variant.colorName}`);
+  };
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -58,19 +95,20 @@ export default function ProductDetailPage() {
     }
     toast.success(
       `${product.name} (${quantity}x) ${
-        selectedSize ? `[${selectedSize}]` : ''
+        selectedColorVariant ? `[${selectedColorVariant.colorName}]` : ''
       } added to bag!`
     );
   };
 
-  // Related products
-  const relatedProducts = SEED_PRODUCTS.filter(
-    (p) => p.id !== product.id && p.categorySlug === product.categorySlug
-  ).slice(0, 4);
+  // Related products from dynamic store
+  const relatedProducts = products
+    .filter((p) => p.id !== product.id && p.categorySlug === product.categorySlug)
+    .slice(0, 4);
 
-  const fallbackRelated = relatedProducts.length > 0
-    ? relatedProducts
-    : SEED_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  const fallbackRelated =
+    relatedProducts.length > 0
+      ? relatedProducts
+      : products.filter((p) => p.id !== product.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white pt-24 pb-20 dark:bg-slate-950">
@@ -103,21 +141,21 @@ export default function ProductDetailPage() {
           <div className="lg:col-span-7 flex flex-col-reverse gap-4 sm:flex-row">
             {/* Vertical Thumbnail Navigation */}
             <div className="flex flex-row gap-3 overflow-x-auto sm:flex-col sm:overflow-y-auto sm:w-24 shrink-0">
-              {images.map((imgUrl, index) => (
+              {currentGallery.map((imgUrl, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(imgUrl)}
                   className={cn(
-                    'relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-2xl bg-white p-1 transition-all duration-200 border-2',
+                    'relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-2xl bg-white p-1 transition-all duration-200 border-2 shrink-0',
                     selectedImage === imgUrl
-                      ? 'border-[#1E1E1E] shadow-md scale-102'
+                      ? 'border-[#1E1E1E] shadow-md scale-102 dark:border-white'
                       : 'border-slate-200 opacity-70 hover:opacity-100 dark:border-slate-800'
                   )}
                 >
                   <img
                     src={imgUrl}
                     alt={`${product.name} thumbnail ${index + 1}`}
-                    className="h-full w-full object-cover rounded-xl"
+                    className="h-full w-full object-contain rounded-xl"
                   />
                 </button>
               ))}
@@ -136,17 +174,28 @@ export default function ProductDetailPage() {
                   -{discount}% OFF
                 </Badge>
               )}
+
+              {product.model && (
+                <div className="absolute right-6 top-6 rounded-full bg-white/90 backdrop-blur-md px-3.5 py-1 text-xs font-mono font-bold text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white">
+                  Model: {product.model}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Side: Product Details & Controls */}
           <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
-              {/* Category Pill */}
-              <div className="mb-3">
+              {/* Category & Badge Pills */}
+              <div className="mb-3 flex items-center gap-2 flex-wrap">
                 <span className="inline-block rounded-full bg-[#1E1E1E] px-4 py-1.5 text-xs font-extrabold tracking-wider uppercase text-white shadow-sm">
                   {product.badge || product.categoryName}
                 </span>
+                {product.model && (
+                  <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-mono font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {product.model}
+                  </span>
+                )}
               </div>
 
               {/* Rating Row */}
@@ -168,7 +217,7 @@ export default function ProductDetailPage() {
                   ({product.rating}/5)
                 </span>
                 <span className="text-xs text-slate-400">
-                  ({product.reviewCount} customer reviews)
+                  ({product.reviewCount} verified customer reviews)
                 </span>
               </div>
 
@@ -192,8 +241,63 @@ export default function ProductDetailPage() {
               {/* In Stock Availability Notice */}
               <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-                <span>In Stock & Ready for Express Dispatch</span>
+                <span>In Stock & Ready for Free Express Dispatch</span>
               </div>
+
+              {/* COLOR / VARIANT SELECTOR */}
+              {product.colorVariants && product.colorVariants.length > 0 && (
+                <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                    <span>Select Color / Finish:</span>
+                    <span className="text-primary font-medium">
+                      {selectedColorVariant?.colorName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {product.colorVariants.map((variant, idx) => {
+                      const isSelected = selectedColorVariant?.colorName === variant.colorName;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleSelectColorVariant(variant)}
+                          className={cn(
+                            'flex items-center gap-2.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border',
+                            isSelected
+                              ? 'border-slate-900 bg-slate-900 text-white shadow-md dark:border-white dark:bg-white dark:text-slate-900'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                          )}
+                        >
+                          <span
+                            className="h-3.5 w-3.5 rounded-full border border-slate-300 shadow-2xs"
+                            style={{ backgroundColor: variant.colorCode || '#2C1D11' }}
+                          />
+                          <span>{variant.colorName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* CERTIFICATIONS BADGES */}
+              {product.certifications && product.certifications.length > 0 && (
+                <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider dark:text-slate-300">
+                    Quality & Safety Certifications:
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {product.certifications.map((cert) => (
+                      <span
+                        key={cert}
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                      >
+                        <Award className="h-3 w-3" />
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity Stepper & Add To Cart Button Row */}
               <div className="mt-8 flex items-center gap-3">
@@ -256,13 +360,13 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col items-center text-center p-2">
                   <ShieldCheck className="h-5 w-5 text-slate-900 dark:text-white" />
                   <span className="mt-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    100% Authentic Quality
+                    3 Year Warranty Included
                   </span>
                 </div>
                 <div className="flex flex-col items-center text-center p-2">
                   <RotateCcw className="h-5 w-5 text-slate-900 dark:text-white" />
                   <span className="mt-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    Easy Service & Support
+                    On-Site Tech Support
                   </span>
                 </div>
               </div>
@@ -272,17 +376,17 @@ export default function ProductDetailPage() {
 
         {/* Tabbed Specification & Description Box */}
         <div className="mt-16 rounded-[32px] border border-slate-100 bg-white p-6 sm:p-10 shadow-sm dark:border-slate-800 dark:bg-card">
-          <div className="flex border-b border-slate-200 dark:border-slate-800">
+          <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 flex-wrap">
             <button
               onClick={() => setActiveTab('description')}
               className={cn(
-                'pb-4 px-4 text-sm sm:text-base font-bold transition-all relative',
+                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
                 activeTab === 'description'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Description & Details
+              Description & Highlights
               {activeTab === 'description' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
@@ -291,65 +395,169 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setActiveTab('specifications')}
               className={cn(
-                'pb-4 px-4 text-sm sm:text-base font-bold transition-all relative',
+                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
                 activeTab === 'specifications'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Specifications
+              Technical Specs & Dimensions
               {activeTab === 'specifications' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
             </button>
 
             <button
-              onClick={() => setActiveTab('shipping')}
+              onClick={() => setActiveTab('logistics')}
               className={cn(
-                'pb-4 px-4 text-sm sm:text-base font-bold transition-all relative',
-                activeTab === 'shipping'
+                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                activeTab === 'logistics'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Shipping & Warranty
-              {activeTab === 'shipping' && (
+              Logistics & Certifications
+              {activeTab === 'logistics' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
             </button>
           </div>
 
           <div className="pt-6">
+            {/* TAB 1: DESCRIPTION (MARKDOWN RENDERED) */}
             {activeTab === 'description' && (
-              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                <p>{product.description || product.shortDescription}</p>
-                <p>
-                  Engineered with direct manufacturer-grade quality, providing ultimate daily recovery, comfort, and performance for your home and lifestyle.
-                </p>
-              </div>
-            )}
-
-            {activeTab === 'specifications' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(product.specifications || [
-                  { label: 'Category', value: product.categoryName },
-                  { label: 'Subcategory', value: product.subCategoryName || 'N/A' },
-                  { label: 'Warranty', value: 'Manufacturer Warranty Included' },
-                  { label: 'Service', value: 'Nationwide On-Site Service' }
-                ]).map((spec, i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
-                    <span className="font-semibold text-slate-500 text-sm">{spec.label}</span>
-                    <span className="font-bold text-slate-900 text-sm dark:text-slate-200">{spec.value}</span>
+              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                {product.description ? (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
+                    {product.description.split('\n').map((line, idx) => {
+                      if (line.startsWith('### ')) {
+                        return (
+                          <h3 key={idx} className="font-display font-bold text-lg text-slate-900 dark:text-white mt-4">
+                            {line.replace('### ', '')}
+                          </h3>
+                        );
+                      }
+                      if (line.startsWith('* ')) {
+                        return (
+                          <li key={idx} className="ml-5 list-disc text-slate-700 dark:text-slate-300">
+                            {line.replace('* ', '')}
+                          </li>
+                        );
+                      }
+                      if (line.startsWith('|')) {
+                        return (
+                          <div key={idx} className="font-mono text-xs overflow-x-auto py-1 text-slate-800 dark:text-slate-200">
+                            {line}
+                          </div>
+                        );
+                      }
+                      return <p key={idx}>{line}</p>;
+                    })}
                   </div>
-                ))}
+                ) : (
+                  <p>{product.shortDescription}</p>
+                )}
               </div>
             )}
 
-            {activeTab === 'shipping' && (
-              <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <p>• Fast nationwide delivery across India.</p>
-                <p>• Free on-site installation and guided product demo by expert technicians.</p>
-                <p>• Up to 3 years coverage with nationwide service support.</p>
+            {/* TAB 2: TECHNICAL SPECS & DIMENSIONS TABLE */}
+            {activeTab === 'specifications' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h4 className="font-display font-bold text-xs uppercase tracking-wider text-primary">
+                    Electrical & Engineering Specs
+                  </h4>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Model Number</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">{product.model || 'AM-333'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Rated Voltage</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedVoltage || '220V - 240V'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Rated Frequency</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedFrequency || '50/60Hz'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Rated Power</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedPower || '150W'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Safety Class</span>
+                      <span className="text-slate-800 dark:text-slate-200">{product.safetyClass || 'Class I Isolation'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Noise Level</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.noiseLevel || '≤ 60dB'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-display font-bold text-xs uppercase tracking-wider text-primary">
+                    Weight & Dimensions
+                  </h4>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Net Weight (KG)</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">{product.netWeight || '85 KG'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Gross Weight (KG)</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.grossWeight || '98 KG'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Sit-Up Dimensions (L x W x H)</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.dimensionsSitUp || '145 x 75 x 115 cm'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Lay-Down Dimensions (L x W x H)</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.dimensionsLayDown || '180 x 75 x 85 cm'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="font-semibold text-slate-500">Package Dimensions</span>
+                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.packageSize || '150 x 80 x 120 cm'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: LOGISTICS & CERTIFICATIONS */}
+            {activeTab === 'logistics' && (
+              <div className="space-y-4 text-xs text-slate-700 dark:text-slate-300">
+                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-2">
+                  <p className="font-bold text-slate-900 dark:text-white text-sm">
+                    Shipping & Container Logistics QTY:
+                  </p>
+                  <p className="font-mono text-xs text-primary font-bold">
+                    {product.containerQty || '20FT: 24 units | 40HQ: 54 units'}
+                  </p>
+                  <p className="text-slate-500">
+                    Direct factory wholesale packing available for commercial buyers and dealership distribution across Pan-India.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-2">
+                  <p className="font-bold text-slate-900 dark:text-white text-sm">
+                    Quality Assurance & Certifications:
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    This equipment has undergone rigorous safety and durability testing certified under international standards:
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    {(product.certifications || ['ISO9001:2015', 'FDA', 'CE', 'KC', 'RoHS', 'ETL']).map((cert) => (
+                      <span
+                        key={cert}
+                        className="rounded-lg bg-white px-3 py-1.5 font-bold text-slate-900 border border-slate-200 shadow-2xs dark:bg-slate-800 dark:text-white dark:border-slate-700"
+                      >
+                        ✓ {cert}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -370,7 +578,6 @@ export default function ProductDetailPage() {
 
       {/* Floating Contact Buttons on Bottom-Right */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-        {/* WhatsApp Icon Button */}
         <a
           href={`https://wa.me/${SITE.headOfficePhone.replace(/[^0-9]/g, '')}`}
           target="_blank"
@@ -381,7 +588,6 @@ export default function ProductDetailPage() {
           <MessageCircle className="h-6 w-6 fill-white" />
         </a>
 
-        {/* Phone Call Icon Button */}
         <a
           href={`tel:${SITE.headOfficePhone}`}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1E1E1E] text-white shadow-xl transition-transform duration-300 hover:scale-110 active:scale-95"

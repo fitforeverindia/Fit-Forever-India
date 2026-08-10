@@ -1,10 +1,17 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { SITE, NAV_LINKS } from '@/lib/site';
 import { CATEGORIES } from '@/lib/site';
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
+
     <footer className="bg-foreground text-white">
       <div className="container-fit grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-5">

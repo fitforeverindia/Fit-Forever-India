@@ -7,6 +7,7 @@ import { ProductCard } from '@/components/store/product-card';
 import { CategoryFilter } from '@/components/store/category-filter';
 import { PaginationControl } from '@/components/ui/pagination-control';
 import { SEED_PRODUCTS } from '@/lib/data';
+import { useProductsStore } from '@/lib/products-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { Product } from '@/lib/types';
@@ -16,6 +17,8 @@ const ITEMS_PER_PAGE = 6;
 function ProductsContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category');
+
+  const { products } = useProductsStore();
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     return initialCategory ? [initialCategory] : ['all'];
@@ -45,7 +48,8 @@ function ProductsContent() {
 
   // Filter products based on selected categories and search query
   const filteredProducts = useMemo(() => {
-    return SEED_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
+
       // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();

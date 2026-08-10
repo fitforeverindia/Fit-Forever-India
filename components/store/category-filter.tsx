@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Check } from 'lucide-react';
+
+import { useCategoriesStore } from '@/lib/categories-store';
 import { cn } from '@/lib/utils';
 
 export type CategoryNode = {
@@ -31,12 +33,21 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({
+
   selectedCategories,
   onChange,
   className,
 }: CategoryFilterProps) {
+  const { categories } = useCategoriesStore();
+
+  const categoryTree = [
+    { id: 'all', name: 'All Products', slug: 'all' },
+    ...categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+  ];
+
   const isAllSelected =
     selectedCategories.length === 0 || selectedCategories.includes('all');
+
 
   const handleToggle = (slug: string) => {
     if (slug === 'all') {
@@ -116,15 +127,13 @@ export function CategoryFilter({
       </h2>
 
       <div className="flex flex-col space-y-1">
-        {CATEGORY_TREE.map((node) => (
+        {categoryTree.map((node) => (
           <React.Fragment key={node.id}>
             {renderCheckbox(node.slug, node.name, false)}
-            {node.children?.map((child) =>
-              renderCheckbox(child.slug, child.name, true)
-            )}
           </React.Fragment>
         ))}
       </div>
+
     </div>
   );
 }

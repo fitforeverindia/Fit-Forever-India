@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { StoreProvider } from '@/components/store/store-provider';
+import { AdminAuthProvider } from '@/lib/admin-auth';
 import { CartDrawer } from '@/components/store/cart-drawer';
 import { WishlistDrawer } from '@/components/store/wishlist-drawer';
 import Navbar from '@/components/layout/navbar';
@@ -67,16 +68,19 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="font-sans antialiased min-h-screen flex flex-col">
-        <StoreProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <ScrollToTop />
-          <CartDrawer />
-          <WishlistDrawer />
-          <Toaster richColors position="bottom-right" />
-        </StoreProvider>
+        <AdminAuthProvider>
+          <StoreProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <ScrollToTop />
+            <CartDrawer />
+            <WishlistDrawer />
+            <Toaster richColors position="bottom-right" />
+          </StoreProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   );
 }
+

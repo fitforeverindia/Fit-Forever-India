@@ -19,6 +19,7 @@ export default function Navbar() {
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const { cartCount, wishlist, setCartOpen, setWishlistOpen } = useStore();
 
+  const isAdminRoute = pathname?.startsWith('/admin');
   const isHome = pathname === '/';
   const overHero = isHome && !scrolled && !productsHovered;
 
@@ -28,6 +29,9 @@ export default function Navbar() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  if (isAdminRoute) return null;
+
 
   return (
     <>

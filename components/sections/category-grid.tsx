@@ -3,14 +3,18 @@
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCategoriesStore } from '@/lib/categories-store';
 import type { Category } from '@/lib/types';
 
-export function CategoryGrid({ categories }: { categories: Category[] }) {
+export function CategoryGrid({ categories: initialCategories }: { categories?: Category[] }) {
+  const { categories: dynamicCategories } = useCategoriesStore();
+  const categories = initialCategories && initialCategories.length > 0 ? initialCategories : dynamicCategories;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
   // Duplicate categories array to ensure seamless infinite sliding loop
   const duplicatedCategories = [...categories, ...categories, ...categories, ...categories];
+
 
   // Auto-scroll effect with pause on hover/interaction
   useEffect(() => {
