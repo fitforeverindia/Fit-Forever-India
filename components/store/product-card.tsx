@@ -20,12 +20,12 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <>
       <motion.article
-        whileHover={{ y: -6 }}
+        whileHover={{ y: -4 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="group relative flex flex-col justify-between overflow-hidden rounded-[32px] border border-slate-100 bg-white p-3.5 sm:p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 hover:shadow-2xl dark:bg-card dark:border-border"
+        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl sm:rounded-[32px] border border-slate-100 bg-white p-2.5 sm:p-4 shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-xl dark:bg-card dark:border-border h-full"
       >
-        {/* Top Image Container - Full Fit */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-[24px] bg-secondary">
+        {/* Top Image Container */}
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl sm:rounded-[24px] bg-slate-50">
           <Link href={`/products/${product.slug}`}>
             <img
               src={product.image}
@@ -35,6 +35,13 @@ export function ProductCard({ product }: { product: Product }) {
             />
           </Link>
 
+          {/* Badge */}
+          {product.badge && (
+            <span className="absolute left-2 top-2 sm:left-3.5 sm:top-3.5 z-10 rounded-full bg-primary/90 px-2 py-0.5 text-[9px] sm:text-xs font-bold text-white shadow-sm backdrop-blur">
+              {product.badge}
+            </span>
+          )}
+
           {/* Top-Right Heart Wishlist Button */}
           <button
             aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -43,11 +50,11 @@ export function ProductCard({ product }: { product: Product }) {
               toggleWishlist(product);
               toast.success(wished ? 'Removed from wishlist' : 'Added to wishlist');
             }}
-            className="absolute right-3.5 top-3.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md backdrop-blur transition-transform duration-300 hover:scale-110 active:scale-95"
+            className="absolute right-2 top-2 sm:right-3.5 sm:top-3.5 z-10 flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur transition-transform duration-300 hover:scale-110 active:scale-95"
           >
             <Heart
               className={cn(
-                'h-4 w-4 transition-colors',
+                'h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors',
                 wished ? 'fill-red-500 text-red-500' : 'text-slate-400 fill-none hover:text-red-500'
               )}
             />
@@ -60,33 +67,33 @@ export function ProductCard({ product }: { product: Product }) {
               e.preventDefault();
               setQuickView(true);
             }}
-            className="absolute bottom-3.5 right-3.5 flex h-9 w-9 translate-y-3 items-center justify-center rounded-full bg-white/90 text-slate-700 opacity-0 shadow-md backdrop-blur transition-all duration-300 hover:scale-110 hover:text-black group-hover:translate-y-0 group-hover:opacity-100"
+            className="absolute bottom-2 right-2 sm:bottom-3.5 sm:right-3.5 hidden sm:flex h-8 w-8 sm:h-9 sm:w-9 translate-y-3 items-center justify-center rounded-full bg-white/90 text-slate-700 opacity-0 shadow-md backdrop-blur transition-all duration-300 hover:scale-110 hover:text-black group-hover:translate-y-0 group-hover:opacity-100"
           >
             <Eye className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-1 flex-col justify-between pt-4 px-1">
+        <div className="flex flex-1 flex-col justify-between pt-2.5 sm:pt-4 px-0.5">
           <div>
             <Link href={`/products/${product.slug}`}>
-              <h3 className="font-sans text-xl font-bold tracking-tight text-slate-900 line-clamp-1 transition-colors group-hover:text-primary dark:text-foreground">
+              <h3 className="font-sans text-xs sm:text-lg font-bold tracking-tight text-slate-900 line-clamp-1 transition-colors group-hover:text-primary dark:text-foreground">
                 {product.name}
               </h3>
             </Link>
-            <p className="mt-2 font-sans text-xs sm:text-sm leading-relaxed text-slate-500 line-clamp-2 dark:text-muted-foreground">
+            <p className="mt-1 font-sans text-[11px] sm:text-xs leading-tight sm:leading-relaxed text-slate-500 line-clamp-2 dark:text-muted-foreground">
               {product.shortDescription ?? 'Lightweight, durable, and built for peak performance every step of the way.'}
             </p>
           </div>
 
           {/* Bottom Bar: Price & Add To Cart Button */}
-          <div className="mt-5 flex items-center justify-between gap-3 pt-1">
-            <div className="flex flex-col">
-              <span className="font-sans text-lg sm:text-xl font-extrabold text-slate-900 dark:text-foreground">
+          <div className="mt-3 sm:mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-3 pt-1">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-sans text-sm sm:text-xl font-extrabold text-slate-900 dark:text-foreground">
                 {formatINR(product.price)}
               </span>
               {product.compareAtPrice && (
-                <span className="text-xs text-slate-400 line-through">
+                <span className="text-[10px] sm:text-xs text-slate-400 line-through">
                   {formatINR(product.compareAtPrice)}
                 </span>
               )}
@@ -97,7 +104,7 @@ export function ProductCard({ product }: { product: Product }) {
                 addToCart(product);
                 toast.success(`${product.name} added to cart`);
               }}
-              className="rounded-full bg-[#1E1E1E] px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 dark:bg-slate-800 dark:hover:bg-slate-700"
+              className="w-full sm:w-auto rounded-full bg-[#1E1E1E] px-3 py-1.5 sm:px-5 sm:py-2.5 text-[10px] sm:text-sm font-semibold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 text-center dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               Add To Cart
             </button>
@@ -105,94 +112,40 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       </motion.article>
 
-      {quickView && <QuickView product={product} onClose={() => setQuickView(false)} />}
+      {/* Quick View Dialog */}
+      {quickView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative max-w-lg w-full rounded-3xl bg-white p-6 shadow-2xl dark:bg-card border border-slate-200 dark:border-border">
+            <button
+              onClick={() => setQuickView(false)}
+              className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              ✕
+            </button>
+            <div className="flex gap-4">
+              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-secondary">
+                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h3 className="font-display font-bold text-lg text-slate-900">{product.name}</h3>
+                <p className="font-mono text-sm font-bold text-primary mt-1">{formatINR(product.price)}</p>
+                <p className="text-xs text-slate-500 mt-2 line-clamp-3">{product.shortDescription}</p>
+                <Button
+                  onClick={() => {
+                    addToCart(product);
+                    setQuickView(false);
+                    toast.success(`${product.name} added to cart`);
+                  }}
+                  size="sm"
+                  className="mt-4 rounded-full bg-primary text-white font-bold"
+                >
+                  Add To Cart Now
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
-
-function QuickView({ product, onClose }: { product: Product; onClose: () => void }) {
-  const { addToCart } = useStore();
-  const discount = discountPercent(product.price, product.compareAtPrice);
-
-  return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="grid max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[32px] bg-card shadow-2xl md:grid-cols-2"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative aspect-square bg-[#F8F8F9] p-6 flex items-center justify-center dark:bg-secondary">
-          <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
-          {discount > 0 && (
-            <Badge className="absolute left-4 top-4 border-0 bg-[#22C55E] px-3 py-1 text-xs font-semibold text-white">
-              -{discount}%
-            </Badge>
-          )}
-        </div>
-        <div className="flex flex-col overflow-y-auto p-6 justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {product.categoryName}
-            </p>
-            <h2 className="mt-1 font-sans text-2xl font-bold">{product.name}</h2>
-            <div className="mt-2 flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      'h-4 w-4',
-                      i <= Math.round(product.rating)
-                        ? 'fill-amber-400 text-amber-400'
-                        : 'text-border'
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {product.rating} ({product.reviewCount})
-              </span>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              {product.description ?? product.shortDescription}
-            </p>
-          </div>
-
-          <div>
-            <div className="mt-5 flex items-end gap-3">
-              <span className="font-sans text-2xl font-bold">
-                {formatINR(product.price)}
-              </span>
-              {product.compareAtPrice && (
-                <span className="pb-1 text-sm text-muted-foreground line-through">
-                  {formatINR(product.compareAtPrice)}
-                </span>
-              )}
-            </div>
-            <div className="mt-6 flex gap-3">
-              <button
-                className="flex-1 rounded-full bg-[#1E1E1E] py-3 text-sm font-semibold text-white transition-all hover:bg-black active:scale-95"
-                onClick={() => {
-                  addToCart(product);
-                  toast.success(`${product.name} added to cart`);
-                  onClose();
-                }}
-              >
-                Add To Cart
-              </button>
-              <Button asChild variant="outline" className="rounded-full">
-                <Link href={`/products/${product.slug}`}>Details</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-

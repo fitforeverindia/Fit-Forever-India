@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, KeyRound, Sparkles } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, KeyRound, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,10 +20,11 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Auto redirect if already logged in
-  if (isAdminLoggedIn) {
-    router.replace('/admin');
-  }
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      router.replace('/admin');
+    }
+  }, [isAdminLoggedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,10 +45,10 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      {/* Ambient background glow gradient */}
+    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 select-none">
+      {/* Background ambient lighting */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -56,7 +57,7 @@ export default function AdminLoginPage() {
         className="relative z-10 w-full max-w-md"
       >
         {/* Main Card Container */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="inline-flex items-center gap-3">
@@ -77,18 +78,18 @@ export default function AdminLoginPage() {
 
             <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary border border-primary/20">
               <ShieldCheck className="h-3.5 w-3.5" />
-              E-Commerce Control Panel
+              Fit Forever Console
             </div>
 
             <h1 className="mt-4 font-display text-2xl font-bold text-white sm:text-3xl">
               Welcome Back
             </h1>
             <p className="mt-2 text-xs text-slate-400">
-              Sign in with your administrator account to manage store inventory, orders, and settings.
+              Sign in with your administrator account to manage store catalog, customers, and Cloudinary media.
             </p>
           </div>
 
-          {/* Quick Demo Credentials Button */}
+          {/* Quick Demo Credentials Fill Button */}
           <div className="mt-6">
             <button
               type="button"
@@ -99,51 +100,47 @@ export default function AdminLoginPage() {
                 <Sparkles className="h-4 w-4 shrink-0 text-primary" />
                 <span>Fill Demo Admin Credentials</span>
               </div>
-              <span className="font-mono text-[10px] bg-primary/20 px-2 py-0.5 rounded text-primary">
-                Auto-fill
-              </span>
+              <span className="font-mono text-[10px] font-bold underline">Click</span>
             </button>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Email Address
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase text-slate-300">
+                Admin Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   type="email"
                   required
                   placeholder="admin@fitforever.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="border-white/10 bg-slate-800/60 pl-10 text-white placeholder:text-slate-500 focus:border-primary focus:ring-primary rounded-xl h-11"
+                  className="bg-slate-800/80 border-slate-700 text-white pl-10 h-11 text-xs rounded-xl focus:border-primary focus:ring-primary"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Password
-                </Label>
-              </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase text-slate-300">
+                Password
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border-white/10 bg-slate-800/60 pl-10 pr-10 text-white placeholder:text-slate-500 focus:border-primary focus:ring-primary rounded-xl h-11"
+                  className="bg-slate-800/80 border-slate-700 text-white pl-10 pr-10 h-11 text-xs rounded-xl focus:border-primary focus:ring-primary"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-white"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -153,16 +150,16 @@ export default function AdminLoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl bg-primary font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20"
+              className="w-full h-11 rounded-xl bg-primary font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all mt-6"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
                   <span>Authenticating...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span>Sign In to Dashboard</span>
+                  <span>Sign In To Admin Console</span>
                   <ArrowRight className="h-4 w-4" />
                 </div>
               )}
@@ -170,12 +167,12 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Footer Back Link */}
-          <div className="mt-8 border-t border-white/10 pt-4 text-center">
+          <div className="mt-8 pt-6 border-t border-slate-800 text-center">
             <Link
               href="/"
-              className="text-xs text-slate-400 transition-colors hover:text-white"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
             >
-              ← Back to Main Fit Forever Storefront
+              ← Back to Main Fit Forever Store
             </Link>
           </div>
         </div>

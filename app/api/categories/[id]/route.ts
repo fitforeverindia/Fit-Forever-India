@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
 import { updateDBCategory, deleteDBCategory } from '@/lib/db-server';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
-    const categories = updateDBCategory(id, body);
+    const categories = await updateDBCategory(id, body);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error PUT /api/categories/[id]:', error);
@@ -18,11 +20,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    const categories = deleteDBCategory(id);
+    const { id } = params;
+    const categories = await deleteDBCategory(id);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error DELETE /api/categories/[id]:', error);

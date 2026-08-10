@@ -8,7 +8,7 @@ import { ProductCard } from '@/components/store/product-card';
 import type { Product } from '@/lib/types';
 
 export function FeaturedProducts({ products }: { products: Product[] }) {
-  if (products.length === 0) return null;
+  if (!products || products.length === 0) return null;
 
   return (
     <section className="bg-secondary/50 py-8 sm:py-12">
@@ -18,24 +18,25 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
               Popular Picks
             </span>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-foreground sm:text-4xl">
+            <h2 className="mt-2 font-display text-2xl font-semibold text-foreground sm:text-4xl">
               Featured Products
             </h2>
-            <p className="mt-3 max-w-lg text-muted-foreground">
+            <p className="mt-2 text-xs sm:text-base max-w-lg text-muted-foreground">
               Loved by thousands of customers across India.
             </p>
           </Reveal>
           <Reveal direction="right">
-            <Button asChild variant="outline" className="border-foreground/20">
+            <Button asChild variant="outline" size="sm" className="border-foreground/20 text-xs font-bold">
               <Link href="/products">
                 View All
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>
             </Button>
           </Reveal>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 2 Products per row on Mobile (grid-cols-2) */}
+        <div className="mt-6 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {products.map((product, i) => (
             <Reveal key={product.id} delay={i * 0.05}>
               <ProductCard product={product} />

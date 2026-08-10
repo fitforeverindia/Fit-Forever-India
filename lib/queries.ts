@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { SEED_PRODUCTS, SEED_CATEGORIES } from './data';
 import type { Product, Category } from './types';
 
 type ProductRow = {
@@ -40,24 +39,26 @@ function mapRow(row: ProductRow): Product {
     badge: row.badge,
     featured: row.is_featured,
     inStock: row.is_active,
+    colorVariants: [],
+    certifications: [],
   };
 }
 
 export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from('product_categories')
-    .select('id, name, slug, description, image_url, sort_order')
-    .order('sort_order', { ascending: true });
+    .select('id, name, slug, description, image_url')
+    .order('created_at', { ascending: false });
 
-  if (error || !data || data.length === 0) {
-    return SEED_CATEGORIES;
+  if (error || !data) {
+    return [];
   }
 
   return data.map((c) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
-    description: c.description,
+    description: c.description || '',
     image: c.image_url ?? '',
   }));
 }
@@ -70,15 +71,14 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     .maybeSingle();
 
   if (error || !data) {
-    const seed = SEED_CATEGORIES.find((c) => c.slug === slug);
-    return seed ?? null;
+    return null;
   }
 
   return {
     id: data.id,
     name: data.name,
     slug: data.slug,
-    description: data.description,
+    description: data.description || '',
     image: data.image_url ?? '',
   };
 }
@@ -102,15 +102,8 @@ export async function getProducts(opts: {
 
   const { data, error } = await query;
 
-  if (error || !data || data.length === 0) {
-    let fallback = [...SEED_PRODUCTS];
-    if (opts.featured) fallback = fallback.filter((p) => p.featured);
-    if (opts.categorySlug) fallback = fallback.filter((p) => p.categorySlug === opts.categorySlug);
-    if (opts.search) {
-      const q = opts.search.toLowerCase();
-      fallback = fallback.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    return applySort(fallback, opts.sort).slice(0, opts.limit ?? fallback.length);
+  if (error || !data) {
+    return [];
   }
 
   let products = data.map(mapRow);
@@ -150,7 +143,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .maybeSingle();
 
   if (error || !data) {
-    return SEED_PRODUCTS.find((p) => p.slug === slug) ?? null;
+    return null;
   }
 
   return mapRow(data);

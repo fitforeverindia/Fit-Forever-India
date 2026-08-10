@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { readDBCategoriesAsync, createDBCategory, resetDBCategories } from '@/lib/db-server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const categories = await readDBCategoriesAsync();
@@ -25,4 +27,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }
-

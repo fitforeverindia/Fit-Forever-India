@@ -1,9 +1,16 @@
 [
   {
-    "id": "525d5107-d4c1-4ae2-905e-9bf684f4048c",
-    "name": "Massage-chairs",
-    "slug": "Massage-chairs",
+    "id": "531761ce-10c3-402a-8d75-550f300f543b",
+    "name": "Spine Bike",
+    "slug": "spine-bike",
     "description": "",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786358838/fit_forever_media/qcdbe2tzscbwnq56ittj.jpg"
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999892/Spinebike_qxv4mi.jpg"
+  },
+  {
+    "id": "b6e735a4-309b-4077-8613-0202b90c06e6",
+    "name": "Massage-chair",
+    "slug": "massage-chair",
+    "description": "",
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786000626/massagechairhero_nkpobu.jpg"
   }
 ]
