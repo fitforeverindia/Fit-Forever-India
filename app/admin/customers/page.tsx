@@ -125,7 +125,7 @@ export default function AdminCustomersPage() {
       toast.success(`Updated customer details for "${formData.name}"`);
     } else {
       const newCust: Customer = {
-        id: `cust-${Date.now()}`,
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cust-${Date.now()}`,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,

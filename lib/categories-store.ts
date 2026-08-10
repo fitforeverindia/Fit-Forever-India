@@ -1,15 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SEED_CATEGORIES } from './data';
 import type { Category } from './types';
 
 const EVENT_NAME = 'fit_forever_categories_updated';
 
-// Helper to broadcast changes locally for instant UI update
+function ensureArray(data: any): Category[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+}
+
 function broadcastCategories(categories: Category[]) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: categories }));
+    const safeList = ensureArray(categories);
+    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: safeList }));
   }
 }
 
@@ -18,10 +24,10 @@ export async function fetchDBCategories(): Promise<Category[]> {
     const res = await fetch('/api/categories', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch categories from DB API');
     const data = await res.json();
-    return Array.isArray(data) ? data : SEED_CATEGORIES;
+    return ensureArray(data);
   } catch (err) {
     console.error('Error fetching categories from DB API:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
@@ -33,11 +39,12 @@ export async function addDBCategory(category: Category): Promise<Category[]> {
       body: JSON.stringify(category),
     });
     const updated = await res.json();
-    broadcastCategories(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCategories(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error creating category in DB:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
@@ -49,11 +56,12 @@ export async function updateDBCategory(id: string, updatedData: Partial<Category
       body: JSON.stringify(updatedData),
     });
     const updated = await res.json();
-    broadcastCategories(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCategories(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error updating category in DB:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
@@ -63,11 +71,12 @@ export async function deleteDBCategory(id: string): Promise<Category[]> {
       method: 'DELETE',
     });
     const updated = await res.json();
-    broadcastCategories(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCategories(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error deleting category in DB:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
@@ -79,20 +88,21 @@ export async function resetDBCategories(): Promise<Category[]> {
       body: JSON.stringify({ reset: true }),
     });
     const updated = await res.json();
-    broadcastCategories(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCategories(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error resetting categories in DB:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
 export function useCategoriesStore() {
-  const [categories, setCategories] = useState<Category[]>(SEED_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const reloadCategories = async () => {
     const data = await fetchDBCategories();
-    setCategories(data);
+    setCategories(ensureArray(data));
   };
 
   useEffect(() => {
@@ -100,7 +110,7 @@ export function useCategoriesStore() {
 
     const handleUpdate = (e: any) => {
       if (e.detail && Array.isArray(e.detail)) {
-        setCategories(e.detail);
+        setCategories(ensureArray(e.detail));
       } else {
         reloadCategories();
       }
@@ -112,24 +122,26 @@ export function useCategoriesStore() {
     };
   }, []);
 
+  const safeList = ensureArray(categories);
+
   return {
-    categories,
-    setCategories,
+    categories: safeList,
+    setCategories: (cats: any) => setCategories(ensureArray(cats)),
     addCategory: async (cat: Category) => {
       const updated = await addDBCategory(cat);
-      setCategories(updated);
+      setCategories(ensureArray(updated));
     },
     updateCategory: async (id: string, data: Partial<Category>) => {
       const updated = await updateDBCategory(id, data);
-      setCategories(updated);
+      setCategories(ensureArray(updated));
     },
     deleteCategory: async (id: string) => {
       const updated = await deleteDBCategory(id);
-      setCategories(updated);
+      setCategories(ensureArray(updated));
     },
     resetCategories: async () => {
       const updated = await resetDBCategories();
-      setCategories(updated);
+      setCategories(ensureArray(updated));
     },
   };
 }

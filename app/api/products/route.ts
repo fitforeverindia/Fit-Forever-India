@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { readDBProducts, createDBProduct, resetDBProducts } from '@/lib/db-server';
+import { readDBProductsAsync, createDBProduct, resetDBProducts } from '@/lib/db-server';
 
 export async function GET() {
   try {
-    const products = readDBProducts();
+    const products = await readDBProductsAsync();
     return NextResponse.json(products);
   } catch (error) {
     console.error('API Error GET /api/products:', error);
@@ -18,10 +18,11 @@ export async function POST(request: Request) {
       const resetList = resetDBProducts();
       return NextResponse.json(resetList);
     }
-    const products = createDBProduct(body);
+    const products = await createDBProduct(body);
     return NextResponse.json(products);
   } catch (error) {
     console.error('API Error POST /api/products:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
+

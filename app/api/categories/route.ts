@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { readDBCategories, createDBCategory, resetDBCategories } from '@/lib/db-server';
+import { readDBCategoriesAsync, createDBCategory, resetDBCategories } from '@/lib/db-server';
 
 export async function GET() {
   try {
-    const categories = readDBCategories();
+    const categories = await readDBCategoriesAsync();
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error GET /api/categories:', error);
@@ -18,10 +18,11 @@ export async function POST(request: Request) {
       const resetList = resetDBCategories();
       return NextResponse.json(resetList);
     }
-    const categories = createDBCategory(body);
+    const categories = await createDBCategory(body);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error POST /api/categories:', error);
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }
+

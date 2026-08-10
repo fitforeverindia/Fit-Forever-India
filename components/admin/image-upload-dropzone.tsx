@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { CloudUpload, Image as ImageIcon, X, Check, Link as LinkIcon } from 'lucide-react';
+import { CloudUpload, Image as ImageIcon, X, Check, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -16,9 +17,10 @@ export function ImageUploadDropzone({
   value,
   onChange,
   label = 'Product Image',
-  placeholder = 'https://...',
+  placeholder = 'https://res.cloudinary.com/...',
 }: ImageUploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,15 +28,41 @@ export function ImageUploadDropzone({
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file (JPG, PNG, WEBP, etc.)');
+      toast.error('Please select a valid image file (JPG, PNG, WEBP, etc.)');
       return;
     }
 
+    setIsUploading(true);
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        onChange(result);
+    reader.onload = async (e) => {
+      const base64Data = e.target?.result as string;
+      if (base64Data) {
+        try {
+          // Upload directly to Cloudinary via server API
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Data }),
+          });
+
+          if (!res.ok) {
+            throw new Error('Cloudinary upload failed');
+          }
+
+          const data = await res.json();
+          if (data.url) {
+            onChange(data.url);
+            toast.success('Image uploaded to Cloudinary successfully!');
+          } else {
+            onChange(base64Data);
+          }
+        } catch (err) {
+          console.error('Error uploading to Cloudinary:', err);
+          toast.warning('Cloudinary upload failed, saved locally instead');
+          onChange(base64Data);
+        } finally {
+          setIsUploading(false);
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -87,7 +115,7 @@ export function ImageUploadDropzone({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-4 text-center cursor-pointer transition-all ${
             isDragging
               ? 'border-primary bg-primary/5 scale-[1.01]'
@@ -102,9 +130,17 @@ export function ImageUploadDropzone({
             accept="image/*"
             onChange={(e) => handleFileSelect(e.target.files)}
             className="hidden"
+            disabled={isUploading}
           />
 
-          {value ? (
+          {isUploading ? (
+            <div className="py-3 flex flex-col items-center gap-2">
+              <Loader2 className="h-6 w-6 text-primary animate-spin" />
+              <p className="text-xs font-bold text-slate-800">
+                Uploading to Cloudinary Cloud...
+              </p>
+            </div>
+          ) : value ? (
             <div className="flex items-center gap-4 w-full justify-between">
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
@@ -112,10 +148,10 @@ export function ImageUploadDropzone({
                 </div>
                 <div className="text-left overflow-hidden">
                   <p className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                    <Check className="h-3.5 w-3.5 text-emerald-600" /> Image Uploaded Ready
+                    <Check className="h-3.5 w-3.5 text-emerald-600" /> Image Uploaded & Stored
                   </p>
                   <p className="text-[10px] text-slate-500 truncate font-mono max-w-[200px] sm:max-w-[300px]">
-                    {value.startsWith('data:') ? 'Local Image File (Data URL)' : value}
+                    {value.includes('cloudinary.com') ? 'Cloudinary Hosted URL' : value}
                   </p>
                 </div>
               </div>
@@ -142,7 +178,7 @@ export function ImageUploadDropzone({
                   Click to upload image or drag & drop
                 </p>
                 <p className="text-[10px] text-slate-400">
-                  Supports PNG, JPG, WEBP or GIF files
+                  Uploads directly to Cloudinary cloud (PNG, JPG, WEBP)
                 </p>
               </div>
             </div>

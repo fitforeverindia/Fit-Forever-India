@@ -1,34 +1,56 @@
 import fs from 'fs';
 import path from 'path';
-import { SEED_CATEGORIES, SEED_PRODUCTS, SEED_CUSTOMERS } from './data';
 import type { Category, Product, Customer } from './types';
+import {
+  getSupabaseProducts,
+  createSupabaseProduct,
+  updateSupabaseProduct,
+  deleteSupabaseProduct,
+  getSupabaseCategories,
+  createSupabaseCategory,
+  updateSupabaseCategory,
+  deleteSupabaseCategory,
+  getSupabaseCustomers,
+  createSupabaseCustomer,
+  updateSupabaseCustomer,
+  deleteSupabaseCustomer,
+} from './supabase-db';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 
-// Ensure database data directory exists
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
-// === CATEGORIES DB API ===
+// === CATEGORIES DB API (SUPABASE CONNECTED) ===
+export async function readDBCategoriesAsync(): Promise<Category[]> {
+  const supabaseCategories = await getSupabaseCategories();
+  if (Array.isArray(supabaseCategories)) {
+    try {
+      ensureDataDir();
+      fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(supabaseCategories, null, 2), 'utf-8');
+    } catch (e) {}
+    return supabaseCategories;
+  }
+  return readDBCategories();
+}
+
 export function readDBCategories(): Category[] {
   ensureDataDir();
   if (!fs.existsSync(CATEGORIES_FILE)) {
-    fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(SEED_CATEGORIES, null, 2), 'utf-8');
-    return SEED_CATEGORIES;
+    return [];
   }
   try {
     const raw = fs.readFileSync(CATEGORIES_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : SEED_CATEGORIES;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error('Error reading categories DB:', err);
-    return SEED_CATEGORIES;
+    return [];
   }
 }
 
@@ -37,46 +59,56 @@ export function writeDBCategories(categories: Category[]): void {
   fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf-8');
 }
 
-export function createDBCategory(category: Category): Category[] {
+export async function createDBCategory(category: Category): Promise<Category[]> {
   const current = readDBCategories();
   const updated = [category, ...current];
   writeDBCategories(updated);
-  return updated;
+  return await createSupabaseCategory(category);
 }
 
-export function updateDBCategory(id: string, updatedData: Partial<Category>): Category[] {
+export async function updateDBCategory(id: string, updatedData: Partial<Category>): Promise<Category[]> {
   const current = readDBCategories();
   const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
   writeDBCategories(updated);
-  return updated;
+  return await updateSupabaseCategory(id, updatedData);
 }
 
-export function deleteDBCategory(id: string): Category[] {
+export async function deleteDBCategory(id: string): Promise<Category[]> {
   const current = readDBCategories();
   const updated = current.filter((c) => c.id !== id);
   writeDBCategories(updated);
-  return updated;
+  return await deleteSupabaseCategory(id);
 }
 
 export function resetDBCategories(): Category[] {
-  writeDBCategories(SEED_CATEGORIES);
-  return SEED_CATEGORIES;
+  writeDBCategories([]);
+  return [];
 }
 
-// === PRODUCTS DB API ===
+// === PRODUCTS DB API (SUPABASE CONNECTED) ===
+export async function readDBProductsAsync(): Promise<Product[]> {
+  const supabaseProducts = await getSupabaseProducts();
+  if (Array.isArray(supabaseProducts)) {
+    try {
+      ensureDataDir();
+      fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(supabaseProducts, null, 2), 'utf-8');
+    } catch (e) {}
+    return supabaseProducts;
+  }
+  return readDBProducts();
+}
+
 export function readDBProducts(): Product[] {
   ensureDataDir();
   if (!fs.existsSync(PRODUCTS_FILE)) {
-    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(SEED_PRODUCTS, null, 2), 'utf-8');
-    return SEED_PRODUCTS;
+    return [];
   }
   try {
     const raw = fs.readFileSync(PRODUCTS_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : SEED_PRODUCTS;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error('Error reading products DB:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
@@ -85,46 +117,56 @@ export function writeDBProducts(products: Product[]): void {
   fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf-8');
 }
 
-export function createDBProduct(product: Product): Product[] {
+export async function createDBProduct(product: Product): Promise<Product[]> {
   const current = readDBProducts();
   const updated = [product, ...current];
   writeDBProducts(updated);
-  return updated;
+  return await createSupabaseProduct(product);
 }
 
-export function updateDBProduct(id: string, updatedData: Partial<Product>): Product[] {
+export async function updateDBProduct(id: string, updatedData: Partial<Product>): Promise<Product[]> {
   const current = readDBProducts();
   const updated = current.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
   writeDBProducts(updated);
-  return updated;
+  return await updateSupabaseProduct(id, updatedData);
 }
 
-export function deleteDBProduct(id: string): Product[] {
+export async function deleteDBProduct(id: string): Promise<Product[]> {
   const current = readDBProducts();
   const updated = current.filter((p) => p.id !== id);
   writeDBProducts(updated);
-  return updated;
+  return await deleteSupabaseProduct(id);
 }
 
 export function resetDBProducts(): Product[] {
-  writeDBProducts(SEED_PRODUCTS);
-  return SEED_PRODUCTS;
+  writeDBProducts([]);
+  return [];
 }
 
-// === CUSTOMERS DB API ===
+// === CUSTOMERS DB API (SUPABASE CONNECTED) ===
+export async function readDBCustomersAsync(): Promise<Customer[]> {
+  const supabaseCustomers = await getSupabaseCustomers();
+  if (Array.isArray(supabaseCustomers)) {
+    try {
+      ensureDataDir();
+      fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(supabaseCustomers, null, 2), 'utf-8');
+    } catch (e) {}
+    return supabaseCustomers;
+  }
+  return readDBCustomers();
+}
+
 export function readDBCustomers(): Customer[] {
   ensureDataDir();
   if (!fs.existsSync(CUSTOMERS_FILE)) {
-    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(SEED_CUSTOMERS, null, 2), 'utf-8');
-    return SEED_CUSTOMERS;
+    return [];
   }
   try {
     const raw = fs.readFileSync(CUSTOMERS_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : SEED_CUSTOMERS;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error('Error reading customers DB:', err);
-    return SEED_CUSTOMERS;
+    return [];
   }
 }
 
@@ -133,24 +175,23 @@ export function writeDBCustomers(customers: Customer[]): void {
   fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2), 'utf-8');
 }
 
-export function createDBCustomer(customer: Customer): Customer[] {
+export async function createDBCustomer(customer: Customer): Promise<Customer[]> {
   const current = readDBCustomers();
   const updated = [customer, ...current];
   writeDBCustomers(updated);
-  return updated;
+  return await createSupabaseCustomer(customer);
 }
 
-export function updateDBCustomer(id: string, updatedData: Partial<Customer>): Customer[] {
+export async function updateDBCustomer(id: string, updatedData: Partial<Customer>): Promise<Customer[]> {
   const current = readDBCustomers();
   const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
   writeDBCustomers(updated);
-  return updated;
+  return await updateSupabaseCustomer(id, updatedData);
 }
 
-export function deleteDBCustomer(id: string): Customer[] {
+export async function deleteDBCustomer(id: string): Promise<Customer[]> {
   const current = readDBCustomers();
   const updated = current.filter((c) => c.id !== id);
   writeDBCustomers(updated);
-  return updated;
+  return await deleteSupabaseCustomer(id);
 }
-

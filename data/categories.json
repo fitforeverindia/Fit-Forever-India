@@ -1,72 +1,9 @@
 [
   {
-    "id": "cat-1786347198648",
-    "name": "sample",
-    "slug": "sample",
+    "id": "525d5107-d4c1-4ae2-905e-9bf684f4048c",
+    "name": "Massage-chairs",
+    "slug": "Massage-chairs",
     "description": "",
-    "image": ""
-  },
-  {
-    "id": "massage-chairs",
-    "name": "Massage Chairs",
-    "slug": "massage-chairs",
-    "description": "Full-body relaxation and recovery",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/45ip-Left-Side-View-scaled-1_qhfnzf.jpg"
-  },
-  {
-    "id": "leg-massager",
-    "name": "Leg Massager",
-    "slug": "leg-massager",
-    "description": "Targeted relief for tired legs",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/Leg_massager_yrusy1.jpg"
-  },
-  {
-    "id": "foot-massager",
-    "name": "Foot Massager",
-    "slug": "foot-massager",
-    "description": "Soothe and revive your feet",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/foot_kfjl1b.jpg"
-  },
-  {
-    "id": "health-mate",
-    "name": "Health Mate",
-    "slug": "health-mate",
-    "description": "Wellness companions for daily care",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/health_mate_mr9iku.jpg"
-  },
-  {
-    "id": "jogpad",
-    "name": "JogPad",
-    "slug": "jogpad",
-    "description": "Compact walking and jogging solutions",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999890/Jogpad_c64iun.jpg"
-  },
-  {
-    "id": "treadmill",
-    "name": "Treadmill",
-    "slug": "treadmill",
-    "description": "Performance running for home",
-    "image": "https://images.pexels.com/photos/12250460/pexels-photo-12250460.jpeg?auto=compress&cs=tinysrgb&w=800"
-  },
-  {
-    "id": "spin-bike",
-    "name": "Spin Bike",
-    "slug": "spin-bike",
-    "description": "Studio-grade indoor cycling",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999892/Spinebike_qxv4mi.jpg"
-  },
-  {
-    "id": "home-gym",
-    "name": "Home Gym",
-    "slug": "home-gym",
-    "description": "All-in-one strength training",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999892/homegym_trzurw.jpg"
-  },
-  {
-    "id": "handy-body-massager",
-    "name": "Handy Body Massager",
-    "slug": "handy-body-massager",
-    "description": "Acupressure on the go",
-    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/Handybody_wofkwy.jpg"
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786358838/fit_forever_media/qcdbe2tzscbwnq56ittj.jpg"
   }
 ]

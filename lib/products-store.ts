@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SEED_PRODUCTS } from './data';
 import type { Product } from './types';
 
 const EVENT_NAME = 'fit_forever_products_updated';
 
+function ensureArray(data: any): Product[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+}
+
 function broadcastProducts(products: Product[]) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: products }));
+    const safeList = ensureArray(products);
+    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: safeList }));
   }
 }
 
@@ -17,10 +24,10 @@ export async function fetchDBProducts(): Promise<Product[]> {
     const res = await fetch('/api/products', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch products from DB API');
     const data = await res.json();
-    return Array.isArray(data) ? data : SEED_PRODUCTS;
+    return ensureArray(data);
   } catch (err) {
     console.error('Error fetching products from DB API:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
@@ -32,11 +39,12 @@ export async function addDBProduct(product: Product): Promise<Product[]> {
       body: JSON.stringify(product),
     });
     const updated = await res.json();
-    broadcastProducts(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastProducts(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error creating product in DB:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
@@ -48,11 +56,12 @@ export async function updateDBProduct(id: string, updatedData: Partial<Product>)
       body: JSON.stringify(updatedData),
     });
     const updated = await res.json();
-    broadcastProducts(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastProducts(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error updating product in DB:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
@@ -62,11 +71,12 @@ export async function deleteDBProduct(id: string): Promise<Product[]> {
       method: 'DELETE',
     });
     const updated = await res.json();
-    broadcastProducts(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastProducts(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error deleting product in DB:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
@@ -78,20 +88,21 @@ export async function resetDBProducts(): Promise<Product[]> {
       body: JSON.stringify({ reset: true }),
     });
     const updated = await res.json();
-    broadcastProducts(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastProducts(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error resetting products in DB:', err);
-    return SEED_PRODUCTS;
+    return [];
   }
 }
 
 export function useProductsStore() {
-  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const reloadProducts = async () => {
     const data = await fetchDBProducts();
-    setProducts(data);
+    setProducts(ensureArray(data));
   };
 
   useEffect(() => {
@@ -99,7 +110,7 @@ export function useProductsStore() {
 
     const handleUpdate = (e: any) => {
       if (e.detail && Array.isArray(e.detail)) {
-        setProducts(e.detail);
+        setProductsState(e.detail);
       } else {
         reloadProducts();
       }
@@ -111,24 +122,30 @@ export function useProductsStore() {
     };
   }, []);
 
+  function setProductsState(list: any) {
+    setProducts(ensureArray(list));
+  }
+
+  const safeList = ensureArray(products);
+
   return {
-    products,
-    setProducts,
+    products: safeList,
+    setProducts: (prods: any) => setProducts(ensureArray(prods)),
     addProduct: async (product: Product) => {
       const updated = await addDBProduct(product);
-      setProducts(updated);
+      setProducts(ensureArray(updated));
     },
     updateProduct: async (id: string, data: Partial<Product>) => {
       const updated = await updateDBProduct(id, data);
-      setProducts(updated);
+      setProducts(ensureArray(updated));
     },
     deleteProduct: async (id: string) => {
       const updated = await deleteDBProduct(id);
-      setProducts(updated);
+      setProducts(ensureArray(updated));
     },
     resetProducts: async () => {
       const updated = await resetDBProducts();
-      setProducts(updated);
+      setProducts(ensureArray(updated));
     },
   };
 }

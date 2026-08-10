@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SEED_CUSTOMERS } from './data';
 import type { Customer } from './types';
 
 const EVENT_NAME = 'fit_forever_customers_updated';
 
+function ensureArray(data: any): Customer[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+}
+
 function broadcastCustomers(customers: Customer[]) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: customers }));
+    const safeList = ensureArray(customers);
+    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: safeList }));
   }
 }
 
@@ -17,10 +24,10 @@ export async function fetchDBCustomers(): Promise<Customer[]> {
     const res = await fetch('/api/customers', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch customers from DB API');
     const data = await res.json();
-    return Array.isArray(data) ? data : SEED_CUSTOMERS;
+    return ensureArray(data);
   } catch (err) {
     console.error('Error fetching customers from DB API:', err);
-    return SEED_CUSTOMERS;
+    return [];
   }
 }
 
@@ -32,11 +39,12 @@ export async function addDBCustomer(customer: Customer): Promise<Customer[]> {
       body: JSON.stringify(customer),
     });
     const updated = await res.json();
-    broadcastCustomers(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCustomers(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error creating customer in DB:', err);
-    return SEED_CUSTOMERS;
+    return [];
   }
 }
 
@@ -48,11 +56,12 @@ export async function updateDBCustomer(id: string, updatedData: Partial<Customer
       body: JSON.stringify(updatedData),
     });
     const updated = await res.json();
-    broadcastCustomers(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCustomers(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error updating customer in DB:', err);
-    return SEED_CUSTOMERS;
+    return [];
   }
 }
 
@@ -62,20 +71,21 @@ export async function deleteDBCustomer(id: string): Promise<Customer[]> {
       method: 'DELETE',
     });
     const updated = await res.json();
-    broadcastCustomers(updated);
-    return updated;
+    const safeUpdated = ensureArray(updated);
+    broadcastCustomers(safeUpdated);
+    return safeUpdated;
   } catch (err) {
     console.error('Error deleting customer in DB:', err);
-    return SEED_CUSTOMERS;
+    return [];
   }
 }
 
 export function useCustomersStore() {
-  const [customers, setCustomers] = useState<Customer[]>(SEED_CUSTOMERS);
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const reloadCustomers = async () => {
     const data = await fetchDBCustomers();
-    setCustomers(data);
+    setCustomers(ensureArray(data));
   };
 
   useEffect(() => {
@@ -83,7 +93,7 @@ export function useCustomersStore() {
 
     const handleUpdate = (e: any) => {
       if (e.detail && Array.isArray(e.detail)) {
-        setCustomers(e.detail);
+        setCustomers(ensureArray(e.detail));
       } else {
         reloadCustomers();
       }
@@ -95,20 +105,22 @@ export function useCustomersStore() {
     };
   }, []);
 
+  const safeList = ensureArray(customers);
+
   return {
-    customers,
-    setCustomers,
-    addCustomer: async (customer: Customer) => {
-      const updated = await addDBCustomer(customer);
-      setCustomers(updated);
+    customers: safeList,
+    setCustomers: (custs: any) => setCustomers(ensureArray(custs)),
+    addCustomer: async (cust: Customer) => {
+      const updated = await addDBCustomer(cust);
+      setCustomers(ensureArray(updated));
     },
     updateCustomer: async (id: string, data: Partial<Customer>) => {
       const updated = await updateDBCustomer(id, data);
-      setCustomers(updated);
+      setCustomers(ensureArray(updated));
     },
     deleteCustomer: async (id: string) => {
       const updated = await deleteDBCustomer(id);
-      setCustomers(updated);
+      setCustomers(ensureArray(updated));
     },
   };
 }

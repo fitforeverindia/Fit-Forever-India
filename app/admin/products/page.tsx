@@ -167,8 +167,12 @@ export default function AdminProductsPage() {
   // Form State
   const [formData, setFormData] = useState(EMPTY_FORM_DATA);
 
+  // Array guards
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
   // Filter products
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = safeProducts.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -277,19 +281,61 @@ export default function AdminProductsPage() {
     }));
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
       toast.error('Please enter a product name');
       return;
     }
 
+    const toastId = toast.loading('Uploading images to Cloudinary & saving to database...');
+
+    let finalMainImage = formData.image;
+    if (finalMainImage && finalMainImage.startsWith('data:image/')) {
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: finalMainImage }),
+        });
+        const data = await res.json();
+        if (data.url) finalMainImage = data.url;
+      } catch (err) {
+        console.error('Main image upload error:', err);
+      }
+    }
+
+    // Process variant images
+    const updatedVariants = await Promise.all(
+      (formData.colorVariants || []).map(async (variant) => {
+        const urls = await Promise.all(
+          (variant.imageUrls || []).map(async (img) => {
+            if (img && img.startsWith('data:image/')) {
+              try {
+                const res = await fetch('/api/upload', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ image: img }),
+                });
+                const data = await res.json();
+                return data.url || img;
+              } catch (e) {
+                return img;
+              }
+            }
+            return img;
+          })
+        );
+        return { ...variant, imageUrls: urls };
+      })
+    );
+
     const generatedSlug =
       formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const selectedCat = SEED_CATEGORIES.find((c) => c.slug === formData.categorySlug);
+    const selectedCat = safeCategories.find((c) => c.slug === formData.categorySlug);
 
     const productPayload: Product = {
-      id: editingProduct ? editingProduct.id : `p-${Date.now()}`,
+      id: editingProduct ? editingProduct.id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`),
       name: formData.name,
       model: formData.model,
       slug: generatedSlug,
@@ -299,12 +345,12 @@ export default function AdminProductsPage() {
       compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
       shortDescription: formData.shortDescription,
       description: formData.description,
-      image: formData.image,
-      gallery: formData.colorVariants.flatMap((cv) => cv.imageUrls).filter(Boolean).length > 0
-        ? formData.colorVariants.flatMap((cv) => cv.imageUrls)
-        : [formData.image],
-      colorVariants: formData.colorVariants,
-      colors: formData.colorVariants.map((cv) => cv.colorName),
+      image: finalMainImage,
+      gallery: updatedVariants.flatMap((cv) => cv.imageUrls).filter(Boolean).length > 0
+        ? updatedVariants.flatMap((cv) => cv.imageUrls)
+        : [finalMainImage],
+      colorVariants: updatedVariants,
+      colors: updatedVariants.map((cv) => cv.colorName),
       rating: editingProduct ? editingProduct.rating : 4.9,
       reviewCount: editingProduct ? editingProduct.reviewCount : 12,
       badge: formData.badge || null,
@@ -350,11 +396,11 @@ export default function AdminProductsPage() {
     };
 
     if (editingProduct) {
-      updateProduct(editingProduct.id, productPayload);
-      toast.success(`Product "${formData.name}" updated successfully!`);
+      await updateProduct(editingProduct.id, productPayload);
+      toast.success(`Product "${formData.name}" updated successfully!`, { id: toastId });
     } else {
-      addProduct(productPayload);
-      toast.success(`Product "${formData.name}" created and added to store!`);
+      await addProduct(productPayload);
+      toast.success(`Product "${formData.name}" created and saved to database!`, { id: toastId });
     }
 
     setIsModalOpen(false);

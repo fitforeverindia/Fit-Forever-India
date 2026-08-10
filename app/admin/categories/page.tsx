@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Layers, Plus, Edit2, Trash2, Package, RotateCcw } from 'lucide-react';
+import { Layers, Plus, Edit2, Trash2, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,13 +27,17 @@ const EMPTY_CATEGORY_FORM = {
 };
 
 export default function AdminCategoriesPage() {
-  const { categories, addCategory, updateCategory, deleteCategory, resetCategories } = useCategoriesStore();
+  const { categories, addCategory, updateCategory, deleteCategory } = useCategoriesStore();
   const { products } = useProductsStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [formData, setFormData] = useState(EMPTY_CATEGORY_FORM);
+
+  // Safety array check for categories and products
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeProducts = Array.isArray(products) ? products : [];
 
   const handleOpenAdd = () => {
     setEditingCategory(null);
@@ -52,42 +56,61 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveCategory = (e: React.FormEvent) => {
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
       toast.error('Please enter a category name');
       return;
     }
 
+    const toastId = toast.loading('Uploading Cloudinary media & saving category...');
+
+    let finalImage = formData.image;
+    if (finalImage && finalImage.startsWith('data:image/')) {
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: finalImage }),
+        });
+        const uploadData = await res.json();
+        if (uploadData.url) {
+          finalImage = uploadData.url;
+        }
+      } catch (err) {
+        console.error('Error uploading category image:', err);
+      }
+    }
+
     const generatedSlug =
       formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
     if (editingCategory) {
-      updateCategory(editingCategory.id, {
+      await updateCategory(editingCategory.id, {
         name: formData.name,
         slug: generatedSlug,
         description: formData.description,
-        image: formData.image,
+        image: finalImage,
       });
-      toast.success(`Category "${formData.name}" updated successfully!`);
+      toast.success(`Category "${formData.name}" updated successfully!`, { id: toastId });
     } else {
       const newCat: Category = {
-        id: `cat-${Date.now()}`,
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cat-${Date.now()}`,
         name: formData.name,
         slug: generatedSlug,
         description: formData.description,
-        image: formData.image,
+        image: finalImage,
       };
-      addCategory(newCat);
-      toast.success(`Created new category "${formData.name}"!`);
+      await addCategory(newCat);
+      toast.success(`Created new category "${formData.name}"!`, { id: toastId });
     }
 
     setIsModalOpen(false);
   };
 
-  const handleDeleteCategory = (id: string, name: string) => {
+  const handleDeleteCategory = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete category "${name}"?`)) {
-      deleteCategory(id);
+      await deleteCategory(id);
       toast.success(`Category "${name}" deleted`);
     }
   };
@@ -98,7 +121,7 @@ export default function AdminCategoriesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl">
-            Product Categories ({categories.length})
+            Product Categories ({safeCategories.length})
           </h2>
           <p className="text-xs text-slate-500">
             Organize fitness lines, homepage circle grids, and navigation mega-menus.
@@ -114,13 +137,12 @@ export default function AdminCategoriesPage() {
             Add New Category
           </Button>
         </div>
-
       </div>
 
       {/* Category Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map((cat) => {
-          const count = products.filter((p) => p.categorySlug === cat.slug).length;
+        {safeCategories.map((cat) => {
+          const count = safeProducts.filter((p) => p.categorySlug === cat.slug).length;
 
           return (
             <div
