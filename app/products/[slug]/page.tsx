@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/store/product-card';
+import { MarkdownLite } from '@/components/shared/markdown-lite';
 import { useStore } from '@/components/store/store-provider';
 import { useProductsStore } from '@/lib/products-store';
 import { formatINR, discountPercent } from '@/lib/format';
@@ -437,11 +438,11 @@ export default function ProductDetailPage() {
 
         {/* Tabbed Specification & Description Box */}
         <div className="mt-16 rounded-[32px] border border-slate-100 bg-white p-6 sm:p-10 shadow-sm dark:border-slate-800 dark:bg-card">
-          <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 flex-wrap">
+          <div className="flex gap-4 overflow-x-auto scrollbar-none border-b border-slate-200 scroll-smooth touch-pan-x dark:border-slate-800">
             <button
               onClick={() => setActiveTab('description')}
               className={cn(
-                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                'shrink-0 whitespace-nowrap pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
                 activeTab === 'description'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
@@ -456,7 +457,7 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setActiveTab('specifications')}
               className={cn(
-                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                'shrink-0 whitespace-nowrap pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
                 activeTab === 'specifications'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
@@ -471,7 +472,7 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setActiveTab('logistics')}
               className={cn(
-                'pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                'shrink-0 whitespace-nowrap pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
                 activeTab === 'logistics'
                   ? 'text-[#1E1E1E] dark:text-white'
                   : 'text-slate-500 hover:text-slate-900'
@@ -490,30 +491,7 @@ export default function ProductDetailPage() {
               <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
                 {product.description ? (
                   <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
-                    {product.description.split('\n').map((line, idx) => {
-                      if (line.startsWith('### ')) {
-                        return (
-                          <h3 key={idx} className="font-display font-bold text-lg text-slate-900 dark:text-white mt-4">
-                            {line.replace('### ', '')}
-                          </h3>
-                        );
-                      }
-                      if (line.startsWith('* ')) {
-                        return (
-                          <li key={idx} className="ml-5 list-disc text-slate-700 dark:text-slate-300">
-                            {line.replace('* ', '')}
-                          </li>
-                        );
-                      }
-                      if (line.startsWith('|')) {
-                        return (
-                          <div key={idx} className="font-mono text-xs overflow-x-auto py-1 text-slate-800 dark:text-slate-200">
-                            {line}
-                          </div>
-                        );
-                      }
-                      return <p key={idx}>{line}</p>;
-                    })}
+                    <MarkdownLite text={product.description} />
                   </div>
                 ) : (
                   <p>{product.shortDescription}</p>

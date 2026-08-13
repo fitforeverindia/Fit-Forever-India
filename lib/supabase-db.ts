@@ -17,6 +17,48 @@ function isValidUUID(id?: string): boolean {
 }
 
 // === PRODUCT MAPPERS ===
+// Fields shared by create/update that map 1:1 from Product (camelCase) to DB row (snake_case)
+function mapProductSpecFields(p: Partial<Product>): any {
+  const row: any = {};
+  if (p.categorySlug !== undefined) row.category_slug = p.categorySlug || null;
+  if (p.categoryName !== undefined) row.category_name = p.categoryName || null;
+
+  if (p.ratedVoltage !== undefined) row.rated_voltage = p.ratedVoltage || null;
+  if (p.ratedFrequency !== undefined) row.rated_frequency = p.ratedFrequency || null;
+  if (p.ratedPower !== undefined) row.rated_power = p.ratedPower || null;
+  if (p.safetyClass !== undefined) row.safety_class = p.safetyClass || null;
+  if (p.ratedTime !== undefined) row.rated_time = p.ratedTime || null;
+  if (p.noiseLevel !== undefined) row.noise_level = p.noiseLevel || null;
+  if (p.airPressure !== undefined) row.air_pressure = p.airPressure || null;
+
+  if (p.netWeight !== undefined) row.net_weight = p.netWeight || null;
+  if (p.grossWeight !== undefined) row.gross_weight = p.grossWeight || null;
+  if (p.dimensionsSitUp !== undefined) row.dimensions_sit_up = p.dimensionsSitUp || null;
+  if (p.dimensionsLayDown !== undefined) row.dimensions_lay_down = p.dimensionsLayDown || null;
+  if (p.packageSize !== undefined) row.package_size = p.packageSize || null;
+
+  if (p.containerQty !== undefined) row.container_qty = p.containerQty || null;
+
+  if (p.massageTechniques !== undefined) row.massage_techniques = p.massageTechniques || null;
+  if (p.autoProgramsCount !== undefined) row.auto_programs_count = p.autoProgramsCount || null;
+  if (p.railType !== undefined) row.rail_type = p.railType || null;
+  if (p.aiBodyDetection !== undefined) row.ai_body_detection = p.aiBodyDetection || null;
+  if (p.heating !== undefined) row.heating = p.heating || null;
+  if (p.airbagZones !== undefined) row.airbag_zones = p.airbagZones || null;
+  if (p.voiceControl !== undefined) row.voice_control = p.voiceControl || null;
+  if (p.bluetoothSpeaker !== undefined) row.bluetooth_speaker = p.bluetoothSpeaker || null;
+  if (p.remoteType !== undefined) row.remote_type = p.remoteType || null;
+  if (p.charging !== undefined) row.charging = p.charging || null;
+
+  if (p.certifications !== undefined) row.certifications = p.certifications || [];
+  if (p.colorVariants !== undefined) row.color_variants = p.colorVariants || [];
+  if (p.sizes !== undefined) row.sizes = p.sizes || [];
+  if (p.colors !== undefined) row.colors = p.colors || [];
+  if (p.specifications !== undefined) row.specifications = p.specifications || [];
+
+  return row;
+}
+
 function mapProductToRow(p: Product) {
   const row: any = {
     name: p.name,
@@ -35,6 +77,7 @@ function mapProductToRow(p: Product) {
     badge: p.badge || null,
     is_featured: p.featured ?? true,
     is_active: p.inStock ?? true,
+    ...mapProductSpecFields(p),
   };
 
   if (isValidUUID(p.id)) {
@@ -69,6 +112,36 @@ function mapRowToProduct(row: any): Product {
     inStock: Boolean(row.is_active),
     colorVariants: row.color_variants || [],
     certifications: row.certifications || [],
+    sizes: row.sizes || [],
+    colors: row.colors || [],
+    specifications: row.specifications || [],
+
+    ratedVoltage: row.rated_voltage || undefined,
+    ratedFrequency: row.rated_frequency || undefined,
+    ratedPower: row.rated_power || undefined,
+    safetyClass: row.safety_class || undefined,
+    ratedTime: row.rated_time || undefined,
+    noiseLevel: row.noise_level || undefined,
+    airPressure: row.air_pressure || undefined,
+
+    netWeight: row.net_weight || undefined,
+    grossWeight: row.gross_weight || undefined,
+    dimensionsSitUp: row.dimensions_sit_up || undefined,
+    dimensionsLayDown: row.dimensions_lay_down || undefined,
+    packageSize: row.package_size || undefined,
+
+    containerQty: row.container_qty || undefined,
+
+    massageTechniques: row.massage_techniques || undefined,
+    autoProgramsCount: row.auto_programs_count || undefined,
+    railType: row.rail_type || undefined,
+    aiBodyDetection: row.ai_body_detection || undefined,
+    heating: row.heating || undefined,
+    airbagZones: row.airbag_zones || undefined,
+    voiceControl: row.voice_control || undefined,
+    bluetoothSpeaker: row.bluetooth_speaker || undefined,
+    remoteType: row.remote_type || undefined,
+    charging: row.charging || undefined,
   };
 }
 
@@ -135,6 +208,7 @@ export async function createSupabaseProduct(p: Product): Promise<Product[]> {
       badge: p.badge || null,
       is_featured: p.featured ?? true,
       is_active: p.inStock ?? true,
+      ...mapProductSpecFields(p),
     };
 
     if (catId) {
@@ -211,6 +285,7 @@ export async function updateSupabaseProduct(id: string, updated: Partial<Product
     if (updated.badge !== undefined) patch.badge = updated.badge;
     if (updated.featured !== undefined) patch.is_featured = updated.featured;
     if (updated.inStock !== undefined) patch.is_active = updated.inStock;
+    Object.assign(patch, mapProductSpecFields(updated));
 
     if (updated.categorySlug) {
       const catId = await getCategoryIdBySlug(updated.categorySlug, updated.categoryName);

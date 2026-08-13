@@ -42,6 +42,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProductsStore } from '@/lib/products-store';
 import { useCategoriesStore } from '@/lib/categories-store';
 import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
+import { MarkdownLite } from '@/components/shared/markdown-lite';
 import type { Product, ColorVariant } from '@/lib/types';
 
 
@@ -1189,24 +1190,8 @@ export default function AdminProductsPage() {
                 {showMarkdownPreview ? (
                   <div className="min-h-[220px] rounded-2xl border border-slate-200 bg-white p-4 text-xs space-y-3 text-slate-800">
                     <p className="font-semibold text-xs text-primary uppercase">Live Rendered Markdown Preview:</p>
-                    <div className="prose prose-xs max-w-none space-y-2">
-                      {formData.description.split('\n').map((line, idx) => {
-                        if (line.startsWith('### ')) {
-                          return (
-                            <h3 key={idx} className="font-display font-bold text-sm text-slate-900 mt-2">
-                              {line.replace('### ', '')}
-                            </h3>
-                          );
-                        }
-                        if (line.startsWith('* ')) {
-                          return (
-                            <li key={idx} className="ml-4 list-disc text-slate-700">
-                              {line.replace('* ', '')}
-                            </li>
-                          );
-                        }
-                        return <p key={idx} className="text-slate-600">{line}</p>;
-                      })}
+                    <div className="prose prose-xs max-w-none space-y-2 text-slate-600">
+                      <MarkdownLite text={formData.description} />
                     </div>
                   </div>
                 ) : (
