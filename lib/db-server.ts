@@ -30,7 +30,7 @@ function ensureDataDir() {
 // === CATEGORIES DB API (SUPABASE CONNECTED) ===
 export async function readDBCategoriesAsync(): Promise<Category[]> {
   const supabaseCategories = await getSupabaseCategories();
-  if (Array.isArray(supabaseCategories)) {
+  if (Array.isArray(supabaseCategories) && supabaseCategories.length > 0) {
     try {
       ensureDataDir();
       fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(supabaseCategories, null, 2), 'utf-8');
@@ -98,7 +98,7 @@ export function resetDBCategories(): Category[] {
 // === PRODUCTS DB API (SUPABASE CONNECTED) ===
 export async function readDBProductsAsync(): Promise<Product[]> {
   const supabaseProducts = await getSupabaseProducts();
-  if (Array.isArray(supabaseProducts)) {
+  if (Array.isArray(supabaseProducts) && supabaseProducts.length > 0) {
     try {
       ensureDataDir();
       fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(supabaseProducts, null, 2), 'utf-8');

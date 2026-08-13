@@ -4,8 +4,7 @@ import type { Category, Product, Customer } from './types';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ezudcnndhboepasvlvas.supabase.co';
 const supabaseKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dWRjbm5kaGJvZXBhc3ZsdmFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTkxODQ1NiwiZXhwIjoyMTAxNDk0NDU2fQ.PWTTc_79-5GjInTSy4BJpBBvCQuc-abAnftJDeh8LU4';
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: { persistSession: false },
@@ -93,6 +92,15 @@ export async function createSupabaseProduct(p: Product): Promise<Product[]> {
     const { data, error } = await supabase.from('products').insert([row]).select('*');
     if (error) {
       console.error('Supabase createSupabaseProduct error:', error.message);
+      if (error.message?.includes('unique') || error.message?.includes('slug') || (error as any).code === '23505') {
+        row.slug = `${row.slug}-${Date.now().toString().slice(-6)}`;
+        const retry = await supabase.from('products').insert([row]).select('*');
+        if (retry.error) {
+          console.error('Supabase createSupabaseProduct retry error:', retry.error.message);
+        } else {
+          console.log('Successfully inserted product on slug retry:', retry.data);
+        }
+      }
     } else {
       console.log('Successfully inserted product into Supabase:', data);
     }
