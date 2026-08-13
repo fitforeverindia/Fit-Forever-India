@@ -77,7 +77,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="flex flex-1 flex-col justify-between pt-2.5 sm:pt-4 px-0.5">
           <div>
             <Link href={`/products/${product.slug}`}>
-              <h3 className="font-sans text-xs sm:text-lg font-bold tracking-tight text-slate-900 line-clamp-1 transition-colors group-hover:text-primary dark:text-foreground">
+              <h3 className="font-sans text-xs sm:text-base font-bold tracking-tight text-slate-900 line-clamp-1 transition-colors hover:text-slate-900 dark:text-foreground">
                 {product.name}
               </h3>
             </Link>
@@ -87,9 +87,9 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Bottom Bar: Price & Add To Cart Button */}
-          <div className="mt-3 sm:mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-3 pt-1">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-sans text-sm sm:text-xl font-extrabold text-slate-900 dark:text-foreground">
+          <div className="mt-3 sm:mt-5 flex items-center justify-between gap-2 pt-1">
+            <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+              <span className="font-sans text-sm sm:text-lg font-extrabold text-slate-900 dark:text-foreground">
                 {formatINR(product.price)}
               </span>
               {product.compareAtPrice && (
@@ -104,7 +104,7 @@ export function ProductCard({ product }: { product: Product }) {
                 addToCart(product);
                 toast.success(`${product.name} added to cart`);
               }}
-              className="w-full sm:w-auto rounded-full bg-[#1E1E1E] px-3 py-1.5 sm:px-5 sm:py-2.5 text-[10px] sm:text-sm font-semibold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 text-center dark:bg-slate-800 dark:hover:bg-slate-700"
+              className="shrink-0 whitespace-nowrap rounded-full bg-[#1E1E1E] px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 text-center dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               Add To Cart
             </button>
