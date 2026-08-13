@@ -19,9 +19,13 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
     ? [...categories, ...categories, ...categories]
     : categories;
 
-  // Auto-scroll effect
+  // Auto-scroll effect optimized for 60-120fps GPU performance
   useEffect(() => {
     if (displayCategories.length <= 4) return;
+
+    // Disable JS scroll loop on mobile touch devices to allow 100% native 120Hz GPU touch scrolling without hanging
+    const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    if (isTouch) return;
 
     let animationFrameId: number;
     let lastTime = performance.now();
@@ -31,9 +35,7 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
       lastTime = currentTime;
 
       if (scrollRef.current && !isPaused) {
-        // Smooth responsive sliding speed for mobile & desktop
-        const speed = window.innerWidth < 640 ? 0.08 : 0.05;
-        scrollRef.current.scrollLeft += deltaTime * speed;
+        scrollRef.current.scrollLeft += deltaTime * 0.035;
 
         const halfWidth = scrollRef.current.scrollWidth / 2;
         if (scrollRef.current.scrollLeft >= halfWidth) {
@@ -53,7 +55,8 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
     setIsPaused(true);
 
     const container = scrollRef.current;
-    const scrollAmount = typeof window !== 'undefined' && window.innerWidth < 640 ? 240 : 340;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const scrollAmount = isMobile ? 180 : 280;
     const targetLeft = direction === 'left' ? container.scrollLeft - scrollAmount : container.scrollLeft + scrollAmount;
 
     container.scrollTo({
@@ -61,10 +64,9 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
       behavior: 'smooth',
     });
 
-    // Resume auto-slide after 1.5 seconds
     setTimeout(() => {
       setIsPaused(false);
-    }, 1500);
+    }, 1200);
   };
 
   if (categories.length === 0) {
@@ -115,10 +117,10 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
           {/* Scrollable Container */}
           <div
             ref={scrollRef}
-            className={`flex gap-6 sm:gap-8 lg:gap-10 overflow-x-auto scrollbar-none py-2 scroll-smooth ${
+            className={`flex gap-6 sm:gap-8 lg:gap-10 overflow-x-auto scrollbar-none py-2 scroll-smooth touch-pan-x overscroll-x-contain ${
               categories.length <= 4 ? 'justify-start sm:justify-center' : ''
             }`}
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           >
             {displayCategories.map((cat, idx) => (
               <Link
