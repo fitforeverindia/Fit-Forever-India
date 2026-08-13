@@ -3,15 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
-import { SITE, NAV_LINKS } from '@/lib/site';
-import { CATEGORIES } from '@/lib/site';
+import { useCategoriesStore } from '@/lib/categories-store';
+import { SITE, NAV_LINKS, CATEGORIES } from '@/lib/site';
 
 export default function Footer() {
   const pathname = usePathname();
+  const { categories: dynamicCategories } = useCategoriesStore();
+  const displayCategories =
+    Array.isArray(dynamicCategories) && dynamicCategories.length > 0
+      ? dynamicCategories
+      : CATEGORIES.map((c) => ({ slug: c.slug, name: c.name }));
+
   if (pathname?.startsWith('/admin')) return null;
 
   return (
-
     <footer className="bg-foreground text-white">
       <div className="container-fit grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-5">
@@ -67,7 +72,7 @@ export default function Footer() {
             Products
           </h3>
           <ul className="space-y-3 text-sm text-white/70">
-            {CATEGORIES.slice(0, 7).map((cat) => (
+            {displayCategories.slice(0, 7).map((cat) => (
               <li key={cat.slug}>
                 <Link
                   href={`/products?category=${cat.slug}`}

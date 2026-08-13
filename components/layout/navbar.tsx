@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useStore } from '@/components/store/store-provider';
+import { useCategoriesStore } from '@/lib/categories-store';
 import { SITE, NAV_LINKS, CATEGORIES, CATEGORY_IMAGES } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,18 @@ export default function Navbar() {
   const [productsHovered, setProductsHovered] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const { cartCount, wishlist, setCartOpen, setWishlistOpen } = useStore();
+
+  const { categories: dynamicCategories } = useCategoriesStore();
+  const displayCategories =
+    Array.isArray(dynamicCategories) && dynamicCategories.length > 0
+      ? dynamicCategories
+      : CATEGORIES.map((c) => ({
+          id: c.slug,
+          name: c.name,
+          slug: c.slug,
+          description: c.description,
+          image: CATEGORY_IMAGES[c.slug] || '',
+        }));
 
   const isAdminRoute = pathname?.startsWith('/admin');
   const isHome = pathname === '/';
@@ -117,7 +130,7 @@ export default function Navbar() {
                           <div className="rounded-[28px] border border-slate-100 bg-white p-6 shadow-2xl dark:bg-card dark:border-border">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-border">
                               <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                                All Categories ({CATEGORIES.length})
+                                All Categories ({displayCategories.length})
                               </span>
                               <Link
                                 href="/products"
@@ -130,7 +143,7 @@ export default function Navbar() {
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
-                              {CATEGORIES.map((cat) => (
+                              {displayCategories.map((cat) => (
                                 <Link
                                   key={cat.slug}
                                   href={`/products?category=${cat.slug}`}
@@ -139,7 +152,7 @@ export default function Navbar() {
                                 >
                                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-muted p-1">
                                     <img
-                                      src={CATEGORY_IMAGES[cat.slug]}
+                                      src={cat.image || CATEGORY_IMAGES[cat.slug] || ''}
                                       alt={cat.name}
                                       className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
                                     />
@@ -294,7 +307,7 @@ export default function Navbar() {
                         >
                           All Products →
                         </Link>
-                        {CATEGORIES.map((cat) => (
+                        {displayCategories.map((cat) => (
                           <Link
                             key={cat.slug}
                             href={`/products?category=${cat.slug}`}

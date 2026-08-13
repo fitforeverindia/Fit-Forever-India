@@ -23,6 +23,8 @@ function mapProductToRow(p: Product) {
     name: p.name,
     model: p.model || null,
     slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now() : 'product-' + Date.now()),
+    category_slug: p.categorySlug || null,
+    category_name: p.categoryName || null,
     short_description: p.shortDescription || null,
     description: p.description || null,
     price: p.price || 0,
@@ -106,6 +108,8 @@ export async function updateSupabaseProduct(id: string, updated: Partial<Product
     if (updated.name !== undefined) patch.name = updated.name;
     if (updated.model !== undefined) patch.model = updated.model;
     if (updated.slug !== undefined) patch.slug = updated.slug;
+    if (updated.categorySlug !== undefined) patch.category_slug = updated.categorySlug;
+    if (updated.categoryName !== undefined) patch.category_name = updated.categoryName;
     if (updated.shortDescription !== undefined) patch.short_description = updated.shortDescription;
     if (updated.description !== undefined) patch.description = updated.description;
     if (updated.price !== undefined) patch.price = updated.price;
@@ -217,8 +221,13 @@ export async function deleteSupabaseCategory(id: string): Promise<Category[]> {
       const { error } = await supabase.from('product_categories').delete().eq('id', id);
       if (error) console.error('Supabase deleteSupabaseCategory error:', error.message);
     } else {
-      const { error } = await supabase.from('product_categories').delete().eq('slug', id);
-      if (error) console.error('Supabase deleteSupabaseCategory by slug error:', error.message);
+      // Try deleting by exact ID match first
+      const { data, error } = await supabase.from('product_categories').delete().eq('id', id).select();
+      if (error || !data || data.length === 0) {
+        // Fallback to slug matching if no record was deleted by id
+        const { error: slugErr } = await supabase.from('product_categories').delete().eq('slug', id);
+        if (slugErr) console.error('Supabase deleteSupabaseCategory by slug error:', slugErr.message);
+      }
     }
   } catch (err) {
     console.error('Failed to delete category from Supabase:', err);

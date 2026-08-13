@@ -332,7 +332,8 @@ export default function AdminProductsPage() {
 
     const generatedSlug =
       formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const selectedCat = safeCategories.find((c) => c.slug === formData.categorySlug);
+    const allCatList = safeCategories.length > 0 ? safeCategories : SEED_CATEGORIES;
+    const selectedCat = allCatList.find((c) => c.slug === formData.categorySlug);
 
     const productPayload: Product = {
       id: editingProduct ? editingProduct.id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`),
@@ -702,7 +703,7 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, categorySlug: e.target.value })}
                       className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 focus:outline-none focus:border-primary"
                     >
-                      {categories.map((c) => (
+                      {(safeCategories.length > 0 ? safeCategories : SEED_CATEGORIES).map((c) => (
                         <option key={c.slug} value={c.slug}>
                           {c.name}
                         </option>

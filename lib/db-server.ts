@@ -34,7 +34,7 @@ export async function readDBCategoriesAsync(): Promise<Category[]> {
     try {
       ensureDataDir();
       fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(supabaseCategories, null, 2), 'utf-8');
-    } catch (e) {}
+    } catch (e) { }
     return supabaseCategories;
   }
   return readDBCategories();
@@ -55,28 +55,38 @@ export function readDBCategories(): Category[] {
 }
 
 export function writeDBCategories(categories: Category[]): void {
-  ensureDataDir();
-  fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf-8');
+  try {
+    ensureDataDir();
+    fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2), 'utf-8');
+  } catch (err) {
+    // Ignore serverless filesystem read-only errors
+  }
 }
 
 export async function createDBCategory(category: Category): Promise<Category[]> {
-  const current = readDBCategories();
-  const updated = [category, ...current];
-  writeDBCategories(updated);
+  try {
+    const current = readDBCategories();
+    const updated = [category, ...current];
+    writeDBCategories(updated);
+  } catch (e) { }
   return await createSupabaseCategory(category);
 }
 
 export async function updateDBCategory(id: string, updatedData: Partial<Category>): Promise<Category[]> {
-  const current = readDBCategories();
-  const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
-  writeDBCategories(updated);
+  try {
+    const current = readDBCategories();
+    const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
+    writeDBCategories(updated);
+  } catch (e) { }
   return await updateSupabaseCategory(id, updatedData);
 }
 
 export async function deleteDBCategory(id: string): Promise<Category[]> {
-  const current = readDBCategories();
-  const updated = current.filter((c) => c.id !== id);
-  writeDBCategories(updated);
+  try {
+    const current = readDBCategories();
+    const updated = current.filter((c) => c.id !== id);
+    writeDBCategories(updated);
+  } catch (e) { }
   return await deleteSupabaseCategory(id);
 }
 
@@ -92,7 +102,7 @@ export async function readDBProductsAsync(): Promise<Product[]> {
     try {
       ensureDataDir();
       fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(supabaseProducts, null, 2), 'utf-8');
-    } catch (e) {}
+    } catch (e) { }
     return supabaseProducts;
   }
   return readDBProducts();
@@ -113,28 +123,38 @@ export function readDBProducts(): Product[] {
 }
 
 export function writeDBProducts(products: Product[]): void {
-  ensureDataDir();
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf-8');
+  try {
+    ensureDataDir();
+    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf-8');
+  } catch (err) {
+    // Ignore serverless filesystem read-only errors
+  }
 }
 
 export async function createDBProduct(product: Product): Promise<Product[]> {
-  const current = readDBProducts();
-  const updated = [product, ...current];
-  writeDBProducts(updated);
+  try {
+    const current = readDBProducts();
+    const updated = [product, ...current];
+    writeDBProducts(updated);
+  } catch (e) { }
   return await createSupabaseProduct(product);
 }
 
 export async function updateDBProduct(id: string, updatedData: Partial<Product>): Promise<Product[]> {
-  const current = readDBProducts();
-  const updated = current.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-  writeDBProducts(updated);
+  try {
+    const current = readDBProducts();
+    const updated = current.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
+    writeDBProducts(updated);
+  } catch (e) { }
   return await updateSupabaseProduct(id, updatedData);
 }
 
 export async function deleteDBProduct(id: string): Promise<Product[]> {
-  const current = readDBProducts();
-  const updated = current.filter((p) => p.id !== id);
-  writeDBProducts(updated);
+  try {
+    const current = readDBProducts();
+    const updated = current.filter((p) => p.id !== id);
+    writeDBProducts(updated);
+  } catch (e) { }
   return await deleteSupabaseProduct(id);
 }
 
@@ -150,7 +170,7 @@ export async function readDBCustomersAsync(): Promise<Customer[]> {
     try {
       ensureDataDir();
       fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(supabaseCustomers, null, 2), 'utf-8');
-    } catch (e) {}
+    } catch (e) { }
     return supabaseCustomers;
   }
   return readDBCustomers();
@@ -171,27 +191,37 @@ export function readDBCustomers(): Customer[] {
 }
 
 export function writeDBCustomers(customers: Customer[]): void {
-  ensureDataDir();
-  fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2), 'utf-8');
+  try {
+    ensureDataDir();
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2), 'utf-8');
+  } catch (err) {
+    // Ignore serverless filesystem read-only errors
+  }
 }
 
 export async function createDBCustomer(customer: Customer): Promise<Customer[]> {
-  const current = readDBCustomers();
-  const updated = [customer, ...current];
-  writeDBCustomers(updated);
+  try {
+    const current = readDBCustomers();
+    const updated = [customer, ...current];
+    writeDBCustomers(updated);
+  } catch (e) { }
   return await createSupabaseCustomer(customer);
 }
 
 export async function updateDBCustomer(id: string, updatedData: Partial<Customer>): Promise<Customer[]> {
-  const current = readDBCustomers();
-  const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
-  writeDBCustomers(updated);
+  try {
+    const current = readDBCustomers();
+    const updated = current.map((c) => (c.id === id ? { ...c, ...updatedData } : c));
+    writeDBCustomers(updated);
+  } catch (e) { }
   return await updateSupabaseCustomer(id, updatedData);
 }
 
 export async function deleteDBCustomer(id: string): Promise<Customer[]> {
-  const current = readDBCustomers();
-  const updated = current.filter((c) => c.id !== id);
-  writeDBCustomers(updated);
+  try {
+    const current = readDBCustomers();
+    const updated = current.filter((c) => c.id !== id);
+    writeDBCustomers(updated);
+  } catch (e) { }
   return await deleteSupabaseCustomer(id);
 }
