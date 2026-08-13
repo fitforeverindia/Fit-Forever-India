@@ -87,7 +87,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Bottom Bar: Price & Add To Cart Button */}
-          <div className="mt-3 sm:mt-5 flex items-center justify-between gap-2 pt-1">
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 pt-1">
             <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
               <span className="font-sans text-sm sm:text-lg font-extrabold text-slate-900 dark:text-foreground">
                 {formatINR(product.price)}
@@ -104,7 +104,7 @@ export function ProductCard({ product }: { product: Product }) {
                 addToCart(product);
                 toast.success(`${product.name} added to cart`);
               }}
-              className="shrink-0 whitespace-nowrap rounded-full bg-[#1E1E1E] px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 text-center dark:bg-slate-800 dark:hover:bg-slate-700"
+              className="w-full sm:w-auto shrink-0 whitespace-nowrap rounded-full bg-[#1E1E1E] px-3.5 py-2 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-white transition-all duration-300 shadow-sm hover:bg-black active:scale-95 text-center dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               Add To Cart
             </button>

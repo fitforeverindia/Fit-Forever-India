@@ -31,7 +31,9 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
       lastTime = currentTime;
 
       if (scrollRef.current && !isPaused) {
-        scrollRef.current.scrollLeft += deltaTime * 0.035;
+        // Smooth responsive sliding speed for mobile & desktop
+        const speed = window.innerWidth < 640 ? 0.08 : 0.05;
+        scrollRef.current.scrollLeft += deltaTime * speed;
 
         const halfWidth = scrollRef.current.scrollWidth / 2;
         if (scrollRef.current.scrollLeft >= halfWidth) {
@@ -48,11 +50,21 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
 
   const handleManualScroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const scrollAmount = 240;
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
+    setIsPaused(true);
+
+    const container = scrollRef.current;
+    const scrollAmount = typeof window !== 'undefined' && window.innerWidth < 640 ? 240 : 340;
+    const targetLeft = direction === 'left' ? container.scrollLeft - scrollAmount : container.scrollLeft + scrollAmount;
+
+    container.scrollTo({
+      left: targetLeft,
       behavior: 'smooth',
     });
+
+    // Resume auto-slide after 1.5 seconds
+    setTimeout(() => {
+      setIsPaused(false);
+    }, 1500);
   };
 
   if (categories.length === 0) {
@@ -73,25 +85,23 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
             </h2>
           </div>
 
-          {/* Manual Scroll Controls */}
-          {displayCategories.length > 4 && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => handleManualScroll('left')}
-                aria-label="Previous categories"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary dark:bg-card dark:border-border"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleManualScroll('right')}
-                aria-label="Next categories"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary dark:bg-card dark:border-border"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-          )}
+          {/* Manual Scroll Controls - Always Available */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleManualScroll('left')}
+              aria-label="Previous categories"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary active:scale-95 dark:bg-card dark:border-border"
+            >
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+            <button
+              onClick={() => handleManualScroll('right')}
+              aria-label="Next categories"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary active:scale-95 dark:bg-card dark:border-border"
+            >
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Carousel Container */}
