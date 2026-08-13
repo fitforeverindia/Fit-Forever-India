@@ -25,13 +25,13 @@ export function ProductCard({ product }: { product: Product }) {
         className="group relative flex flex-col justify-between overflow-hidden rounded-2xl sm:rounded-[32px] border border-slate-100 bg-white p-2.5 sm:p-4 shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-xl dark:bg-card dark:border-border h-full"
       >
         {/* Top Image Container */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-xl sm:rounded-[24px] bg-slate-50">
-          <Link href={`/products/${product.slug}`}>
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl sm:rounded-[24px] bg-white border border-slate-100 p-2 dark:bg-slate-900 dark:border-slate-800">
+          <Link href={`/products/${product.slug}`} className="block h-full w-full">
             <img
               src={product.image}
               alt={product.name}
               loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+              className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
           </Link>
 

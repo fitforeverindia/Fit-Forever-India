@@ -132,16 +132,25 @@ export function useProductsStore() {
     products: safeList,
     setProducts: (prods: any) => setProducts(ensureArray(prods)),
     addProduct: async (product: Product) => {
+      setProducts((prev) => [product, ...prev.filter((p) => p.id !== product.id)]);
       const updated = await addDBProduct(product);
-      setProducts(ensureArray(updated));
+      if (Array.isArray(updated) && updated.length > 0) {
+        setProducts(ensureArray(updated));
+      }
     },
     updateProduct: async (id: string, data: Partial<Product>) => {
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
       const updated = await updateDBProduct(id, data);
-      setProducts(ensureArray(updated));
+      if (Array.isArray(updated) && updated.length > 0) {
+        setProducts(ensureArray(updated));
+      }
     },
     deleteProduct: async (id: string) => {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
       const updated = await deleteDBProduct(id);
-      setProducts(ensureArray(updated));
+      if (Array.isArray(updated) && updated.length > 0) {
+        setProducts(ensureArray(updated));
+      }
     },
     resetProducts: async () => {
       const updated = await resetDBProducts();

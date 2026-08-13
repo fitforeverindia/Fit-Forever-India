@@ -45,13 +45,17 @@ function mapProductToRow(p: Product) {
 }
 
 function mapRowToProduct(row: any): Product {
+  const cat = Array.isArray(row.product_categories)
+    ? row.product_categories[0]
+    : row.product_categories || null;
+
   return {
     id: row.id,
     name: row.name,
     model: row.model || undefined,
     slug: row.slug,
-    categorySlug: row.category_slug || 'massage-chairs',
-    categoryName: row.category_name || 'Massage Chairs',
+    categorySlug: cat?.slug || row.category_slug || 'massage-chairs',
+    categoryName: cat?.name || row.category_name || 'Massage Chairs',
     shortDescription: row.short_description || null,
     description: row.description || null,
     price: Number(row.price || 0),
@@ -71,7 +75,18 @@ function mapRowToProduct(row: any): Product {
 // === PRODUCTS SUPABASE QUERIES ===
 export async function getSupabaseProducts(): Promise<Product[]> {
   try {
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    let { data, error } = await supabase
+      .from('products')
+      .select('*, product_categories(id, name, slug)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase getSupabaseProducts join query warning:', error.message);
+      const fallback = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) {
       console.error('Supabase getSupabaseProducts error:', error.message);
       return [];
@@ -86,21 +101,93 @@ export async function getSupabaseProducts(): Promise<Product[]> {
   }
 }
 
+async function getCategoryIdBySlug(slug?: string, name?: string): Promise<string | null> {
+  if (!slug) return null;
+  try {
+    const { data } = await supabase.from('product_categories').select('id').eq('slug', slug).maybeSingle();
+    if (data?.id) return data.id;
+
+    // Auto-create category in product_categories if missing in Supabase
+    const catName = name || slug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+    const { data: created } = await supabase.from('product_categories').insert([{ name: catName, slug }]).select('id').single();
+    if (created?.id) return created.id;
+  } catch (e) {}
+  return null;
+}
+
 export async function createSupabaseProduct(p: Product): Promise<Product[]> {
   try {
-    const row = mapProductToRow(p);
-    const { data, error } = await supabase.from('products').insert([row]).select('*');
+    const catId = await getCategoryIdBySlug(p.categorySlug, p.categoryName);
+
+    // 1. Standard row matching standard Supabase products schema
+    const baseRow: any = {
+      name: p.name,
+      model: p.model || null,
+      slug: p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now() : 'product-' + Date.now()),
+      short_description: p.shortDescription || null,
+      description: p.description || null,
+      price: Number(p.price || 0),
+      compare_at_price: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+      image_url: p.image || null,
+      gallery_urls: p.gallery && p.gallery.length > 0 ? p.gallery : (p.image ? [p.image] : []),
+      rating: Number(p.rating || 5.0),
+      review_count: Number(p.reviewCount || 0),
+      badge: p.badge || null,
+      is_featured: p.featured ?? true,
+      is_active: p.inStock ?? true,
+    };
+
+    if (catId) {
+      baseRow.category_id = catId;
+    }
+
+    if (isValidUUID(p.id)) {
+      baseRow.id = p.id;
+    }
+
+    // Attempt 1: Insert standard baseRow
+    let { data, error } = await supabase.from('products').insert([baseRow]).select('*');
+
+    // Attempt 2: If insert failed with category_slug/category_name column support
     if (error) {
-      console.error('Supabase createSupabaseProduct error:', error.message);
-      if (error.message?.includes('unique') || error.message?.includes('slug') || (error as any).code === '23505') {
-        row.slug = `${row.slug}-${Date.now().toString().slice(-6)}`;
-        const retry = await supabase.from('products').insert([row]).select('*');
-        if (retry.error) {
-          console.error('Supabase createSupabaseProduct retry error:', retry.error.message);
-        } else {
-          console.log('Successfully inserted product on slug retry:', retry.data);
-        }
+      console.warn('Supabase insert attempt 1 error:', error.message);
+      const rowWithCategoryStrings = {
+        ...baseRow,
+        category_slug: p.categorySlug || null,
+        category_name: p.categoryName || null,
+      };
+      const try2 = await supabase.from('products').insert([rowWithCategoryStrings]).select('*');
+      if (!try2.error && try2.data) {
+        data = try2.data;
+        error = null;
       }
+    }
+
+    // Attempt 3: If explicit ID failed, delete row.id and let DB generate UUID primary key
+    if (error && baseRow.id) {
+      console.warn('Retrying insert without explicit ID...');
+      delete baseRow.id;
+      const try3 = await supabase.from('products').insert([baseRow]).select('*');
+      if (!try3.error && try3.data) {
+        data = try3.data;
+        error = null;
+      }
+    }
+
+    // Attempt 4: If duplicate slug conflict, append timestamp suffix
+    if (error && (error.message?.includes('unique') || error.message?.includes('slug') || (error as any).code === '23505')) {
+      console.warn('Retrying insert with unique timestamped slug...');
+      baseRow.slug = `${baseRow.slug}-${Date.now().toString().slice(-6)}`;
+      delete baseRow.id;
+      const try4 = await supabase.from('products').insert([baseRow]).select('*');
+      if (!try4.error && try4.data) {
+        data = try4.data;
+        error = null;
+      }
+    }
+
+    if (error) {
+      console.error('Supabase createSupabaseProduct final error:', error.message);
     } else {
       console.log('Successfully inserted product into Supabase:', data);
     }
@@ -116,23 +203,60 @@ export async function updateSupabaseProduct(id: string, updated: Partial<Product
     if (updated.name !== undefined) patch.name = updated.name;
     if (updated.model !== undefined) patch.model = updated.model;
     if (updated.slug !== undefined) patch.slug = updated.slug;
-    if (updated.categorySlug !== undefined) patch.category_slug = updated.categorySlug;
-    if (updated.categoryName !== undefined) patch.category_name = updated.categoryName;
     if (updated.shortDescription !== undefined) patch.short_description = updated.shortDescription;
     if (updated.description !== undefined) patch.description = updated.description;
-    if (updated.price !== undefined) patch.price = updated.price;
-    if (updated.compareAtPrice !== undefined) patch.compare_at_price = updated.compareAtPrice;
+    if (updated.price !== undefined) patch.price = Number(updated.price);
+    if (updated.compareAtPrice !== undefined) patch.compare_at_price = updated.compareAtPrice ? Number(updated.compareAtPrice) : null;
     if (updated.image !== undefined) patch.image_url = updated.image;
     if (updated.badge !== undefined) patch.badge = updated.badge;
     if (updated.featured !== undefined) patch.is_featured = updated.featured;
     if (updated.inStock !== undefined) patch.is_active = updated.inStock;
 
+    if (updated.categorySlug) {
+      const catId = await getCategoryIdBySlug(updated.categorySlug, updated.categoryName);
+      if (catId) patch.category_id = catId;
+    }
+
+    let res: any;
     if (isValidUUID(id)) {
-      const { error } = await supabase.from('products').update(patch).eq('id', id);
-      if (error) console.error('Supabase updateSupabaseProduct error:', error.message);
+      res = await supabase.from('products').update(patch).eq('id', id).select('*');
     } else {
-      const { error } = await supabase.from('products').update(patch).eq('slug', updated.slug || id);
-      if (error) console.error('Supabase updateSupabaseProduct by slug error:', error.message);
+      // Find existing product by ID or slug first to target the exact row by ID
+      const { data: existing } = await supabase.from('products').select('id, slug').or(`id.eq.${id},slug.eq.${id}`).maybeSingle();
+      if (existing?.id) {
+        res = await supabase.from('products').update(patch).eq('id', existing.id).select('*');
+      } else {
+        res = await supabase.from('products').update(patch).eq('slug', id).select('*');
+      }
+    }
+
+    if (res.error) {
+      console.error('Supabase updateSupabaseProduct error:', res.error.message);
+    }
+
+    // Only create a new product if query succeeded without error AND no existing product was matched
+    if (!res.error && (!res.data || res.data.length === 0)) {
+      console.log(`Product with id/slug "${id}" not found in Supabase during update. Inserting as new product...`);
+      const fullProductToCreate: Product = {
+        id: isValidUUID(id) ? id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`),
+        name: updated.name || 'Updated Product',
+        model: updated.model,
+        slug: updated.slug || (typeof id === 'string' && id.length > 2 ? id : `prod-${Date.now()}`),
+        categorySlug: updated.categorySlug || 'massage-chairs',
+        categoryName: updated.categoryName || 'Massage Chairs',
+        price: updated.price ? Number(updated.price) : 0,
+        compareAtPrice: updated.compareAtPrice ? Number(updated.compareAtPrice) : null,
+        shortDescription: updated.shortDescription || null,
+        description: updated.description || null,
+        image: updated.image || '',
+        gallery: updated.gallery || [],
+        rating: updated.rating || 5.0,
+        reviewCount: updated.reviewCount || 0,
+        badge: updated.badge || null,
+        featured: updated.featured ?? true,
+        inStock: updated.inStock ?? true,
+      };
+      await createSupabaseProduct(fullProductToCreate);
     }
   } catch (err) {
     console.error('Failed to update product in Supabase:', err);

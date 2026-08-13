@@ -35,12 +35,56 @@ import type { Product, ColorVariant } from '@/lib/types';
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const rawSlug = params?.slug as string;
+  const decodedSlug = rawSlug ? decodeURIComponent(rawSlug) : '';
 
   const { products } = useProductsStore();
+  const [loading, setLoading] = useState(true);
+  const [fetchedProduct, setFetchedProduct] = useState<Product | null>(null);
 
-  // Find product by slug from dynamic store
-  const product = products.find((p) => p.slug === slug) ?? products[0];
+  // Find product in store by slug or ID
+  const productInStore = products.find(
+    (p) =>
+      p.slug === decodedSlug ||
+      p.id === decodedSlug ||
+      p.slug.toLowerCase() === decodedSlug.toLowerCase()
+  );
+
+  // Fetch product from API if not yet loaded in store
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProduct() {
+      if (productInStore) {
+        if (isMounted) setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch('/api/products');
+        const list = await res.json();
+        if (Array.isArray(list) && isMounted) {
+          const match = list.find(
+            (p: Product) =>
+              p.slug === decodedSlug ||
+              p.id === decodedSlug ||
+              p.slug.toLowerCase() === decodedSlug.toLowerCase()
+          );
+          if (match) {
+            setFetchedProduct(match);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load product details:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadProduct();
+    return () => {
+      isMounted = false;
+    };
+  }, [decodedSlug, productInStore]);
+
+  const product = productInStore || fetchedProduct;
 
   const { addToCart, toggleWishlist, isInWishlist } = useStore();
   const wished = product ? isInWishlist(product.id) : false;
@@ -75,8 +119,25 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white pt-32 pb-20 text-center dark:bg-slate-950">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#1E1E1E] border-t-transparent"></div>
+        <p className="mt-4 text-sm font-semibold text-slate-500">Loading product details...</p>
+      </div>
+    );
+  }
+
   if (!product) {
-    return notFound();
+    return (
+      <div className="min-h-screen bg-white pt-32 pb-20 text-center dark:bg-slate-950 flex flex-col items-center justify-center">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Product Not Found</h2>
+        <p className="mt-2 text-sm text-slate-500">The product you are looking for does not exist or may have been updated.</p>
+        <Link href="/products" className="mt-6 inline-block rounded-full bg-[#1E1E1E] px-6 py-2.5 text-xs font-bold text-white hover:bg-black">
+          Back to All Products
+        </Link>
+      </div>
+    );
   }
 
   const discount = discountPercent(product.price, product.compareAtPrice);
@@ -162,7 +223,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Main Product Image Container */}
-            <div className="relative flex-1 aspect-square sm:aspect-[4/5] overflow-hidden rounded-[32px] border border-slate-100 bg-[#F5F2EC] dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center justify-center p-4">
+            <div className="relative flex-1 aspect-square sm:aspect-[4/5] overflow-hidden rounded-[32px] border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center justify-center p-6 sm:p-8">
               <img
                 src={selectedImage}
                 alt={product.name}

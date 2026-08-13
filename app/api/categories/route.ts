@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { readDBCategoriesAsync, createDBCategory, resetDBCategories } from '@/lib/db-server';
+import { getSupabaseCategories, createSupabaseCategory } from '@/lib/supabase-db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const categories = await readDBCategoriesAsync();
+    const categories = await getSupabaseCategories();
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error GET /api/categories:', error);
@@ -16,11 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    if (body.reset) {
-      const resetList = resetDBCategories();
-      return NextResponse.json(resetList);
-    }
-    const categories = await createDBCategory(body);
+    const categories = await createSupabaseCategory(body);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error POST /api/categories:', error);

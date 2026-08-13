@@ -1,5 +1,40 @@
 [
   {
+    "id": "e4edc34e-2645-483f-bfbd-1dcf92004c55",
+    "name": "massage-chairs",
+    "slug": "massage-chairs",
+    "description": "",
+    "image": ""
+  },
+  {
+    "id": "20d7d371-b44c-4fe2-b03d-ba8434450b6d",
+    "name": "testing",
+    "slug": "testing",
+    "description": "",
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786623635/fit_forever_media/u8jaup0fdy3n8qunirma.jpg"
+  },
+  {
+    "id": "eb7421d6-fa56-46b8-9832-648dfd5ff274",
+    "name": "Home Gym",
+    "slug": "home-gym",
+    "description": "",
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786622243/fit_forever_media/lgi8pnpxs719rwkyqeeh.jpg"
+  },
+  {
+    "id": "1261038a-bdbe-4a3e-a0ab-01abcd927ac8",
+    "name": "JogPad",
+    "slug": "jogpad",
+    "description": "",
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786622168/fit_forever_media/we0ac5rzl8xnu3qirl8n.jpg"
+  },
+  {
+    "id": "b9eb88fe-e4cb-476f-b395-8a6f72ce3271",
+    "name": "Leg Massager",
+    "slug": "leg-massager",
+    "description": "",
+    "image": "https://res.cloudinary.com/ufptbplr/image/upload/v1786622099/fit_forever_media/lybk1qx2x8sdcv8bwzk6.jpg"
+  },
+  {
     "id": "531761ce-10c3-402a-8d75-550f300f543b",
     "name": "Spine Bike",
     "slug": "spine-bike",

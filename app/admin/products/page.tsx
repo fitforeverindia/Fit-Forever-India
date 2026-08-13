@@ -39,7 +39,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { SEED_CATEGORIES } from '@/lib/data';
 import { useProductsStore } from '@/lib/products-store';
 import { useCategoriesStore } from '@/lib/categories-store';
 import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
@@ -113,7 +112,7 @@ const EMPTY_FORM_DATA: {
   name: '',
   model: '',
   slug: '',
-  categorySlug: 'massage-chairs',
+  categorySlug: '',
   price: 0,
   compareAtPrice: '',
   badge: '',
@@ -191,7 +190,10 @@ export default function AdminProductsPage() {
   const handleOpenAdd = () => {
     setEditingProduct(null);
     setActiveTab('basic');
-    setFormData(EMPTY_FORM_DATA);
+    setFormData({
+      ...EMPTY_FORM_DATA,
+      categorySlug: safeCategories[0]?.slug || '',
+    });
     setIsModalOpen(true);
   };
 
@@ -332,16 +334,16 @@ export default function AdminProductsPage() {
 
     const generatedSlug =
       formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const allCatList = safeCategories.length > 0 ? safeCategories : SEED_CATEGORIES;
-    const selectedCat = allCatList.find((c) => c.slug === formData.categorySlug);
+    const targetCatSlug = formData.categorySlug || safeCategories[0]?.slug || 'massage-chairs';
+    const selectedCat = safeCategories.find((c) => c.slug === targetCatSlug);
 
     const productPayload: Product = {
       id: editingProduct ? editingProduct.id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`),
       name: formData.name,
       model: formData.model,
       slug: generatedSlug,
-      categorySlug: formData.categorySlug,
-      categoryName: selectedCat?.name ?? formData.categorySlug,
+      categorySlug: targetCatSlug,
+      categoryName: selectedCat?.name || targetCatSlug,
       price: Number(formData.price),
       compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
       shortDescription: formData.shortDescription,
@@ -703,7 +705,7 @@ export default function AdminProductsPage() {
                       onChange={(e) => setFormData({ ...formData, categorySlug: e.target.value })}
                       className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 focus:outline-none focus:border-primary"
                     >
-                      {(safeCategories.length > 0 ? safeCategories : SEED_CATEGORIES).map((c) => (
+                      {safeCategories.map((c) => (
                         <option key={c.slug} value={c.slug}>
                           {c.name}
                         </option>

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { readDBProductsAsync, createDBProduct, resetDBProducts } from '@/lib/db-server';
+import { getSupabaseProducts, createSupabaseProduct } from '@/lib/supabase-db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const products = await readDBProductsAsync();
+    const products = await getSupabaseProducts();
     return NextResponse.json(products);
   } catch (error) {
     console.error('API Error GET /api/products:', error);
@@ -16,11 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    if (body.reset) {
-      const resetList = resetDBProducts();
-      return NextResponse.json(resetList);
-    }
-    const products = await createDBProduct(body);
+    const products = await createSupabaseProduct(body);
     return NextResponse.json(products);
   } catch (error) {
     console.error('API Error POST /api/products:', error);

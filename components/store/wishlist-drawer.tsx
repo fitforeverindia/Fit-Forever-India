@@ -6,14 +6,15 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/components/store/store-provider';
 import { formatINR } from '@/lib/format';
-import { SEED_PRODUCTS } from '@/lib/data';
+import { useProductsStore } from '@/lib/products-store';
 import type { Product } from '@/lib/types';
 
 export function WishlistDrawer() {
   const { wishlist, isWishlistOpen, setWishlistOpen, toggleWishlist, addToCart } = useStore();
+  const { products } = useProductsStore();
 
   const items: Product[] = wishlist
-    .map((id) => SEED_PRODUCTS.find((p) => p.id === id))
+    .map((id) => products.find((p) => p.id === id))
     .filter(Boolean) as Product[];
 
   return (

@@ -9,6 +9,9 @@ import { InstagramGallery } from '@/components/sections/instagram-gallery';
 import { CtaBanner } from '@/components/sections/cta-banner';
 import { getCategories, getProducts } from '@/lib/queries';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home() {
   const [categories, products] = await Promise.all([
     getCategories(),

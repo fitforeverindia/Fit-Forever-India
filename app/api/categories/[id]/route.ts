@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateDBCategory, deleteDBCategory } from '@/lib/db-server';
+import { updateSupabaseCategory, deleteSupabaseCategory } from '@/lib/supabase-db';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function PUT(
   try {
     const { id } = params;
     const body = await request.json();
-    const categories = await updateDBCategory(id, body);
+    const categories = await updateSupabaseCategory(id, body);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error PUT /api/categories/[id]:', error);
@@ -24,7 +24,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    const categories = await deleteDBCategory(id);
+    const categories = await deleteSupabaseCategory(id);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('API Error DELETE /api/categories/[id]:', error);

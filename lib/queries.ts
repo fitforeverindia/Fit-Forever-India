@@ -26,8 +26,8 @@ function mapRow(row: ProductRow): Product {
     id: row.id,
     name: row.name,
     slug: row.slug,
-    categorySlug: cat?.slug ?? '',
-    categoryName: cat?.name ?? '',
+    categorySlug: cat?.slug || (row as any).category_slug || 'massage-chairs',
+    categoryName: cat?.name || (row as any).category_name || 'Massage Chairs',
     shortDescription: row.short_description,
     description: row.description,
     price: Number(row.price),
@@ -98,7 +98,7 @@ export async function getProducts(opts: {
     .eq('is_active', true);
 
   if (opts.featured) {
-    query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
+    query = query.eq('is_featured', true).order('created_at', { ascending: false });
   } else {
     query = query.order('created_at', { ascending: false });
   }

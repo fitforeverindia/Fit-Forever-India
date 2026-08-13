@@ -1,12 +1,11 @@
 'use client';
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, SlidersHorizontal, Grid3X3, Grid2X2, RotateCcw } from 'lucide-react';
 import { ProductCard } from '@/components/store/product-card';
 import { CategoryFilter } from '@/components/store/category-filter';
 import { PaginationControl } from '@/components/ui/pagination-control';
-import { SEED_PRODUCTS } from '@/lib/data';
 import { useProductsStore } from '@/lib/products-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ const ITEMS_PER_PAGE = 6;
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialCategory = searchParams.get('category');
 
   const { products } = useProductsStore();
@@ -32,13 +32,21 @@ function ProductsContent() {
   useEffect(() => {
     if (initialCategory) {
       setSelectedCategories([initialCategory]);
+    } else {
+      setSelectedCategories(['all']);
     }
   }, [initialCategory]);
 
-  // Reset page to 1 when filters change
+  // Reset page to 1 when filters change and sync URL
   const handleCategoryChange = (slugs: string[]) => {
     setSelectedCategories(slugs);
     setCurrentPage(1);
+    const firstActive = slugs.find((s) => s !== 'all');
+    if (firstActive) {
+      router.push(`/products?category=${firstActive}`, { scroll: false });
+    } else {
+      router.push('/products', { scroll: false });
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,29 +72,20 @@ function ProductsContent() {
         return true;
       }
 
-      // Check if product matches categorySlug or subCategorySlug
-      const pCat = product.categorySlug?.toLowerCase();
-      const pSubCat = product.subCategorySlug?.toLowerCase();
+      const pCatSlug = (product.categorySlug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const pCatName = (product.categoryName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
       return selectedCategories.some((catSlug) => {
-        const slugLower = catSlug.toLowerCase();
-        if (pCat === slugLower || pSubCat === slugLower) return true;
-
-        // Parent lehengas matches child lehengas
-        if (slugLower === 'lehengas' && (pCat === 'lehengas' || pSubCat?.includes('lehengas'))) {
-          return true;
-        }
-        // Parent sharara-gharara matches child shararas
-        if (
-          (slugLower === 'sharara-gharara' || slugLower === 'sharara') &&
-          (pCat?.includes('sharara') || pSubCat?.includes('sharara') || pSubCat?.includes('gharara'))
-        ) {
-          return true;
-        }
-        return false;
+        const targetClean = catSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!targetClean || targetClean === 'all') return true;
+        return (
+          pCatSlug === targetClean ||
+          pCatName === targetClean ||
+          (pCatSlug.length > 2 && targetClean.length > 2 && (pCatSlug.includes(targetClean) || targetClean.includes(pCatSlug)))
+        );
       });
     });
-  }, [selectedCategories, searchQuery]);
+  }, [products, selectedCategories, searchQuery]);
 
   // Sort products
   const sortedProducts = useMemo(() => {

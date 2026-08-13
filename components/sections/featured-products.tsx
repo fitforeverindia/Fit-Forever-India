@@ -14,15 +14,8 @@ export function FeaturedProducts({ products: initialProducts }: { products?: Pro
   // Combine initial server products and client dynamic store products
   const allProducts = initialProducts && initialProducts.length > 0 ? initialProducts : dynamicProducts;
 
-  // Filter featured or available products so section never disappears in production
-  let featuredList = allProducts.filter((p) => p.featured);
-  if (featuredList.length === 0) {
-    featuredList = allProducts.filter((p) => p.inStock);
-  }
-  if (featuredList.length === 0) {
-    featuredList = allProducts;
-  }
-
+  // Filter ONLY products explicitly marked as featured by admin in database
+  const featuredList = allProducts.filter((p) => Boolean(p.featured));
   const items = featuredList.slice(0, 8);
 
   if (items.length === 0) return null;
