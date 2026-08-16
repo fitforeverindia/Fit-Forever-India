@@ -1,8 +1,16 @@
 // Lightweight renderer for the small Markdown subset supported by product descriptions:
-// "### heading", "* bullet", "| pipe | table |" and plain paragraphs.
+// "### heading", "* bullet", "| pipe | table |", "![alt](url)" images/slides, and plain paragraphs.
 // Shared between the storefront product page and the admin live preview so both stay in sync.
 
 import type { ReactNode } from 'react';
+
+const IMAGE_LINE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+
+function parseImageLine(line: string): { alt: string; url: string } | null {
+  const m = line.trim().match(IMAGE_LINE_RE);
+  if (!m) return null;
+  return { alt: m[1], url: m[2] };
+}
 
 function isTableRow(line: string): boolean {
   return line.trim().startsWith('|');
@@ -17,6 +25,20 @@ function parseTableRow(line: string): string[] {
   return trimmed.split('|').map((cell) => cell.trim());
 }
 
+// Inline **bold** and *italic* within a line of text (paragraphs and bullets).
+function renderInline(text: string): ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter((p) => p !== '');
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={idx}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={idx}>{part.slice(1, -1)}</em>;
+    }
+    return part;
+  });
+}
+
 export function MarkdownLite({ text }: { text: string }) {
   if (!text) return null;
   const lines = text.split('\n');
@@ -27,6 +49,23 @@ export function MarkdownLite({ text }: { text: string }) {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // --- Image/slide: "![alt](url)" renders as a full-width block, stacked vertically like the source ---
+    {
+      const img = parseImageLine(line);
+      if (img) {
+        nodes.push(
+          <img
+            key={key++}
+            src={img.url}
+            alt={img.alt || 'Product slide'}
+            className="my-4 w-full rounded-2xl border border-slate-200 object-cover dark:border-slate-800"
+          />
+        );
+        i++;
+        continue;
+      }
+    }
 
     // --- Table block: consecutive "| ... |" lines ---
     if (isTableRow(line)) {
@@ -98,7 +137,7 @@ export function MarkdownLite({ text }: { text: string }) {
         <ul key={key++} className="list-disc space-y-1.5 pl-5">
           {items.map((item, idx) => (
             <li key={idx} className="text-slate-700 dark:text-slate-300">
-              {item}
+              {renderInline(item)}
             </li>
           ))}
         </ul>
@@ -127,7 +166,7 @@ export function MarkdownLite({ text }: { text: string }) {
     }
 
     // --- Paragraph ---
-    nodes.push(<p key={key++}>{line}</p>);
+    nodes.push(<p key={key++}>{renderInline(line)}</p>);
     i++;
   }
 

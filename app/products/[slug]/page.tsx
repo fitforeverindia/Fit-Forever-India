@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, notFound } from 'next/navigation';
 import {
@@ -9,6 +9,9 @@ import {
   ShoppingBag,
   Info,
   ChevronRight,
+  ChevronLeft,
+  ChevronUp,
+  ChevronDown,
   ShieldCheck,
   Truck,
   RotateCcw,
@@ -33,6 +36,131 @@ import { formatINR, discountPercent } from '@/lib/format';
 import { SITE } from '@/lib/site';
 import { cn } from '@/lib/utils';
 import type { Product, ColorVariant } from '@/lib/types';
+
+// Thumbnail rail with arrow-based paging instead of a raw scrollbar: an edge arrow
+// appears only when there's more to see in that direction, and scrolls one "page" at a time.
+function ThumbnailNav({
+  images,
+  selectedImage,
+  onSelect,
+  productName,
+}: {
+  images: string[];
+  selectedImage: string;
+  onSelect: (url: string) => void;
+  productName: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canScrollBack, setCanScrollBack] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
+
+  const updateArrows = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const vertical = window.innerWidth >= 640;
+    if (vertical) {
+      setCanScrollBack(el.scrollTop > 4);
+      setCanScrollForward(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+    } else {
+      setCanScrollBack(el.scrollLeft > 4);
+      setCanScrollForward(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    }
+  };
+
+  useEffect(() => {
+    updateArrows();
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', updateArrows);
+    return () => {
+      el.removeEventListener('scroll', updateArrows);
+      window.removeEventListener('resize', updateArrows);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
+  const scroll = (direction: -1 | 1) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const vertical = window.innerWidth >= 640;
+    el.scrollBy(
+      vertical ? { top: direction * 180, behavior: 'smooth' } : { left: direction * 180, behavior: 'smooth' }
+    );
+  };
+
+  const arrowButtonClass =
+    'flex h-14 w-8 sm:h-7 sm:w-full shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white';
+
+  return (
+    <div className="flex w-full shrink-0 flex-row items-center gap-2 sm:w-16 sm:flex-col sm:items-stretch">
+      {canScrollBack && (
+        <button type="button" onClick={() => scroll(-1)} aria-label="Show earlier images" className={arrowButtonClass}>
+          <ChevronLeft className="h-4 w-4 sm:hidden" />
+          <ChevronUp className="hidden h-4 w-4 sm:block" />
+        </button>
+      )}
+
+      <div
+        ref={containerRef}
+        className="hide-scrollbar flex flex-1 flex-row gap-2 overflow-x-auto scroll-smooth sm:max-h-[440px] sm:flex-none sm:flex-col sm:overflow-y-auto"
+      >
+        {images.map((imgUrl, index) => (
+          <button
+            key={index}
+            onClick={() => onSelect(imgUrl)}
+            className={cn(
+              'relative h-14 w-14 sm:h-16 sm:w-16 overflow-hidden rounded-xl bg-white p-1 transition-all duration-200 border-2 shrink-0',
+              selectedImage === imgUrl
+                ? 'border-[#1E1E1E] shadow-md dark:border-white'
+                : 'border-slate-200 opacity-70 hover:opacity-100 dark:border-slate-800'
+            )}
+          >
+            <img
+              src={imgUrl}
+              alt={`${productName} thumbnail ${index + 1}`}
+              referrerPolicy="no-referrer"
+              className="h-full w-full object-contain rounded-lg"
+            />
+          </button>
+        ))}
+      </div>
+
+      {canScrollForward && (
+        <button type="button" onClick={() => scroll(1)} aria-label="Show more images" className={arrowButtonClass}>
+          <ChevronRight className="h-4 w-4 sm:hidden" />
+          <ChevronDown className="hidden h-4 w-4 sm:block" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Label/value spec table styled identically to MarkdownLite's "| table |" rendering, so the
+// Specification and Warranty tabs read visually the same as the Description tab.
+function SpecTable({ rows }: { rows: [string, string][] }) {
+  return (
+    <div className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table className="w-full border-collapse text-xs sm:text-sm">
+        <tbody>
+          {rows.map(([label, value], idx) => (
+            <tr
+              key={idx}
+              className="odd:bg-white even:bg-slate-50/60 dark:odd:bg-transparent dark:even:bg-slate-900/40"
+            >
+              <td className="border-b border-slate-100 px-3 py-2 font-semibold text-slate-500 dark:border-slate-800">
+                {label}
+              </td>
+              <td className="border-b border-slate-100 px-3 py-2 font-mono text-slate-800 dark:border-slate-800 dark:text-slate-200">
+                {value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -105,7 +233,7 @@ export default function ProductDetailPage() {
 
   const [selectedImage, setSelectedImage] = useState<string>(currentGallery[0] || product?.image || '');
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'logistics'>('description');
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'logistics' | 'faqs' | 'video'>('description');
 
   // Update selected image when color variant changes
   useEffect(() => {
@@ -201,33 +329,19 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           {/* Left Side: Thumbnail List + Main Display Image */}
           <div className="lg:col-span-7 flex flex-col-reverse gap-4 sm:flex-row">
-            {/* Vertical Thumbnail Navigation */}
-            <div className="flex flex-row gap-3 overflow-x-auto sm:flex-col sm:overflow-y-auto sm:w-24 shrink-0">
-              {currentGallery.map((imgUrl, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(imgUrl)}
-                  className={cn(
-                    'relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-2xl bg-white p-1 transition-all duration-200 border-2 shrink-0',
-                    selectedImage === imgUrl
-                      ? 'border-[#1E1E1E] shadow-md scale-102 dark:border-white'
-                      : 'border-slate-200 opacity-70 hover:opacity-100 dark:border-slate-800'
-                  )}
-                >
-                  <img
-                    src={imgUrl}
-                    alt={`${product.name} thumbnail ${index + 1}`}
-                    className="h-full w-full object-contain rounded-xl"
-                  />
-                </button>
-              ))}
-            </div>
+            <ThumbnailNav
+              images={currentGallery}
+              selectedImage={selectedImage}
+              onSelect={setSelectedImage}
+              productName={product.name}
+            />
 
             {/* Main Product Image Container */}
-            <div className="relative flex-1 aspect-square sm:aspect-[4/5] overflow-hidden rounded-[32px] border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center justify-center p-6 sm:p-8">
+            <div className="relative flex-1 aspect-square sm:aspect-[4/5] sm:max-h-[520px] overflow-hidden rounded-[32px] border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center justify-center p-6 sm:p-8">
               <img
                 src={selectedImage}
                 alt={product.name}
+                referrerPolicy="no-referrer"
                 className="h-full w-full object-contain transition-all duration-500 hover:scale-105"
               />
 
@@ -289,7 +403,7 @@ export default function ProductDetailPage() {
               </h1>
 
               {/* Price Row */}
-              <div className="mt-4 flex items-baseline gap-3">
+              <div className="mt-4 flex flex-wrap items-baseline gap-3">
                 <span className="font-sans text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   {formatINR(product.price)}
                 </span>
@@ -298,13 +412,27 @@ export default function ProductDetailPage() {
                     {formatINR(product.compareAtPrice)}
                   </span>
                 )}
+                {product.compareAtPrice && product.compareAtPrice > product.price && (
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    You save {formatINR(product.compareAtPrice - product.price)} ({discount}%)
+                  </span>
+                )}
               </div>
+              <p className="mt-1 text-[11px] text-slate-400">(inclusive of all taxes)</p>
 
-              {/* In Stock Availability Notice */}
-              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-                <span>In Stock & Ready for Free Express Dispatch</span>
+              {/* Stock Availability Notice */}
+              <div
+                className={cn(
+                  'mt-4 flex items-center gap-2 text-xs font-semibold',
+                  product.inStock ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                )}
+              >
+                <span className={cn('flex h-2 w-2 rounded-full', product.inStock ? 'bg-emerald-500' : 'bg-red-500')} />
+                <span>{product.inStock ? 'In Stock & Ready for Free Express Dispatch' : 'Out of Stock'}</span>
               </div>
+              {product.model && (
+                <p className="mt-1 text-[11px] font-mono text-slate-400">Model: {product.model}</p>
+              )}
 
               {/* COLOR / VARIANT SELECTOR */}
               {product.colorVariants && product.colorVariants.length > 0 && (
@@ -422,7 +550,7 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col items-center text-center p-2">
                   <ShieldCheck className="h-5 w-5 text-slate-900 dark:text-white" />
                   <span className="mt-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    3 Year Warranty Included
+                    {product.warranty || '3 Year Warranty Included'}
                   </span>
                 </div>
                 <div className="flex flex-col items-center text-center p-2">
@@ -448,7 +576,7 @@ export default function ProductDetailPage() {
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Description & Highlights
+              Description
               {activeTab === 'description' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
@@ -463,7 +591,7 @@ export default function ProductDetailPage() {
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Technical Specs & Dimensions
+              Specification
               {activeTab === 'specifications' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
@@ -478,18 +606,57 @@ export default function ProductDetailPage() {
                   : 'text-slate-500 hover:text-slate-900'
               )}
             >
-              Logistics & Certifications
+              Warranty
               {activeTab === 'logistics' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
               )}
             </button>
+
+            {product.faqs && product.faqs.length > 0 && (
+              <button
+                onClick={() => setActiveTab('faqs')}
+                className={cn(
+                  'shrink-0 whitespace-nowrap pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                  activeTab === 'faqs'
+                    ? 'text-[#1E1E1E] dark:text-white'
+                    : 'text-slate-500 hover:text-slate-900'
+                )}
+              >
+                FAQs
+                {activeTab === 'faqs' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
+                )}
+              </button>
+            )}
+
+            {product.videoUrl && (
+              <button
+                onClick={() => setActiveTab('video')}
+                className={cn(
+                  'shrink-0 whitespace-nowrap pb-4 px-2 text-sm sm:text-base font-bold transition-all relative',
+                  activeTab === 'video'
+                    ? 'text-[#1E1E1E] dark:text-white'
+                    : 'text-slate-500 hover:text-slate-900'
+                )}
+              >
+                Video
+                {activeTab === 'video' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E1E1E] rounded-full dark:bg-white" />
+                )}
+              </button>
+            )}
           </div>
 
           <div className="pt-6">
-            {/* TAB 1: DESCRIPTION (MARKDOWN RENDERED) */}
+            {/* TAB 1: DESCRIPTION — render exact HTML from PowerMax when available */}
             {activeTab === 'description' && (
               <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
-                {product.description ? (
+                {product.descriptionHtml ? (
+                  <div
+                    className="prose prose-slate dark:prose-invert max-w-none [&_img]:rounded-xl [&_img]:border [&_img]:border-slate-200 [&_img]:dark:border-slate-800 [&_img]:my-4 [&_img]:w-full [&_img]:object-cover"
+                    dangerouslySetInnerHTML={{ __html: product.descriptionHtml.replace(/<img /g, '<img referrerpolicy="no-referrer" ') }}
+                  />
+                ) : product.description ? (
                   <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
                     <MarkdownLite text={product.description} />
                   </div>
@@ -499,103 +666,159 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* TAB 2: TECHNICAL SPECS & DIMENSIONS TABLE */}
+            {/* TAB 2: SPECIFICATION — render exact HTML table from PowerMax when available */}
             {activeTab === 'specifications' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-display font-bold text-xs uppercase tracking-wider text-primary">
-                    Electrical & Engineering Specs
-                  </h4>
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Model Number</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">{product.model || 'AM-333'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Rated Voltage</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedVoltage || '220V - 240V'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Rated Frequency</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedFrequency || '50/60Hz'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Rated Power</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.ratedPower || '150W'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Safety Class</span>
-                      <span className="text-slate-800 dark:text-slate-200">{product.safetyClass || 'Class I Isolation'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Noise Level</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.noiseLevel || '≤ 60dB'}</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                {product.specificationHtml ? (
+                  <div
+                    className="prose prose-slate dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs [&_table]:sm:text-sm [&_table]:rounded-xl [&_table]:overflow-hidden [&_table]:border [&_table]:border-slate-200 [&_table]:dark:border-slate-800 [&_th]:bg-slate-50 [&_th]:dark:bg-slate-900 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-bold [&_td]:px-3 [&_td]:py-2 [&_td]:border-b [&_td]:border-slate-100 [&_td]:dark:border-slate-800 [&_tr:nth-child(odd)]:bg-white [&_tr:nth-child(even)]:bg-slate-50/60 [&_tr:nth-child(odd)]:dark:bg-transparent [&_tr:nth-child(even)]:dark:bg-slate-900/40"
+                    dangerouslySetInnerHTML={{ __html: product.specificationHtml }}
+                  />
+                ) : (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+                      Electrical & Engineering Specs
+                    </h3>
+                    <SpecTable
+                      rows={[
+                        ['Model Number', product.model || 'AM-333'],
+                        ['Rated Voltage', product.ratedVoltage || '220V - 240V'],
+                        ['Rated Frequency', product.ratedFrequency || '50/60Hz'],
+                        ['Rated Power', product.ratedPower || '150W'],
+                        ['Safety Class', product.safetyClass || 'Class I Isolation'],
+                        ['Noise Level', product.noiseLevel || '≤ 60dB'],
+                      ]}
+                    />
 
-                <div className="space-y-3">
-                  <h4 className="font-display font-bold text-xs uppercase tracking-wider text-primary">
-                    Weight & Dimensions
-                  </h4>
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Net Weight (KG)</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">{product.netWeight || '85 KG'}</span>
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+                      Weight & Dimensions
+                    </h3>
+                    <SpecTable
+                      rows={[
+                        ['Net Weight (KG)', product.netWeight || '85 KG'],
+                        ['Gross Weight (KG)', product.grossWeight || '98 KG'],
+                        ['Sit-Up Dimensions (L x W x H)', product.dimensionsSitUp || '145 x 75 x 115 cm'],
+                        ['Lay-Down Dimensions (L x W x H)', product.dimensionsLayDown || '180 x 75 x 85 cm'],
+                        ['Package Dimensions', product.packageSize || '150 x 80 x 120 cm'],
+                      ]}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: WARRANTY — render exact HTML from PowerMax when available */}
+            {activeTab === 'logistics' && (
+              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                {product.warrantyHtml ? (
+                  <div
+                    className="prose prose-slate dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: product.warrantyHtml }}
+                  />
+                ) : (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                      {product.warranty || '3 Years On-Site Comprehensive Warranty'}
+                    </h3>
+                    <p>
+                      Covers manufacturing defects and on-site technical support for the warranty period from the date
+                      of purchase.
+                    </p>
+                  </div>
+                )}
+
+                {/* Certifications */}
+                {product.certifications && product.certifications.length > 0 && (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3 mt-6">
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+                      Quality Assurance & Certifications
+                    </h3>
+                    <ul className="list-disc space-y-1.5 pl-5">
+                      {product.certifications.map((cert) => (
+                        <li key={cert} className="text-slate-700 dark:text-slate-300">
+                          {cert}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Sales CTA + Trust Badges */}
+                <div className="not-prose mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    Still Confused? Call Sales at{' '}
+                    <a
+                      href={`tel:${SITE.phones[0].replace(/\s+/g, '')}`}
+                      className="text-primary hover:underline"
+                    >
+                      {SITE.phones[0]}
+                    </a>
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    Call our sales team for queries and better assistance. Our sales team will guide you to buy the
+                    best suitable fitness equipment.
+                  </p>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Truck className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">
+                        Nationwide Service Network
+                      </p>
+                      <p className="text-xs text-slate-500">On-site service anywhere in India</p>
                     </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Gross Weight (KG)</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.grossWeight || '98 KG'}</span>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Award className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Certified Products</p>
+                      <p className="text-xs text-slate-500">CE, GS, RoHS certified products</p>
                     </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Sit-Up Dimensions (L x W x H)</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.dimensionsSitUp || '145 x 75 x 115 cm'}</span>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Phone className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Customer Support</p>
+                      <p className="text-xs text-slate-500">Call us on {SITE.headOfficePhone}</p>
                     </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Lay-Down Dimensions (L x W x H)</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.dimensionsLayDown || '180 x 75 x 85 cm'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-semibold text-slate-500">Package Dimensions</span>
-                      <span className="font-mono text-slate-800 dark:text-slate-200">{product.packageSize || '150 x 80 x 120 cm'}</span>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Box className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Free Delivery</p>
+                      <p className="text-xs text-slate-500">Free & lightning fast delivery</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 3: LOGISTICS & CERTIFICATIONS */}
-            {activeTab === 'logistics' && (
-              <div className="space-y-4 text-xs text-slate-700 dark:text-slate-300">
-                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-2">
-                  <p className="font-bold text-slate-900 dark:text-white text-sm">
-                    Shipping & Container Logistics QTY:
-                  </p>
-                  <p className="font-mono text-xs text-primary font-bold">
-                    {product.containerQty || '20FT: 24 units | 40HQ: 54 units'}
-                  </p>
-                  <p className="text-slate-500">
-                    Direct factory wholesale packing available for commercial buyers and dealership distribution across Pan-India.
-                  </p>
-                </div>
+            {/* TAB 4: FAQs — accordion from PowerMax data */}
+            {activeTab === 'faqs' && product.faqs && product.faqs.length > 0 && (
+              <div className="space-y-3">
+                {product.faqs.map((faq, idx) => (
+                  <details
+                    key={idx}
+                    className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden"
+                  >
+                    <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm sm:text-base font-semibold text-slate-900 dark:text-white list-none [&::-webkit-details-marker]:hidden">
+                      <span>{faq.question}</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="border-t border-slate-100 px-5 py-4 text-sm leading-relaxed text-slate-600 dark:border-slate-800 dark:text-slate-400">
+                      {faq.answer}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
 
-                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 space-y-2">
-                  <p className="font-bold text-slate-900 dark:text-white text-sm">
-                    Quality Assurance & Certifications:
-                  </p>
-                  <p className="text-slate-600 dark:text-slate-300">
-                    This equipment has undergone rigorous safety and durability testing certified under international standards:
-                  </p>
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    {(product.certifications || ['ISO9001:2015', 'FDA', 'CE', 'KC', 'RoHS', 'ETL']).map((cert) => (
-                      <span
-                        key={cert}
-                        className="rounded-lg bg-white px-3 py-1.5 font-bold text-slate-900 border border-slate-200 shadow-2xs dark:bg-slate-800 dark:text-white dark:border-slate-700"
-                      >
-                        ✓ {cert}
-                      </span>
-                    ))}
-                  </div>
+            {/* TAB 5: VIDEO — embedded YouTube or other video */}
+            {activeTab === 'video' && product.videoUrl && (
+              <div className="flex justify-center">
+                <div className="w-full max-w-3xl aspect-video rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <iframe
+                    src={product.videoUrl}
+                    title={`${product.name} Video`}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
               </div>
             )}

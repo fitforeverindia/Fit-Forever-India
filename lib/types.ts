@@ -63,6 +63,16 @@ export type Product = {
   // Certifications
   certifications?: string[]; // e.g. ['ISO9001:2015', 'FDA', 'CE', 'KC', 'RoHS', 'ETL']
 
+  // Warranty
+  warranty?: string; // e.g. "1-Year Manufacturer Warranty"
+
+  // Rich HTML content (exact copy from source website)
+  descriptionHtml?: string | null;
+  specificationHtml?: string | null;
+  warrantyHtml?: string | null;
+  faqs?: { question: string; answer: string }[];
+  videoUrl?: string | null;
+
   specifications?: { label: string; value: string }[];
 };
 

@@ -31,6 +31,7 @@ export function ProductCard({ product }: { product: Product }) {
               src={product.image}
               alt={product.name}
               loading="lazy"
+              referrerPolicy="no-referrer"
               className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
           </Link>
@@ -124,7 +125,7 @@ export function ProductCard({ product }: { product: Product }) {
             </button>
             <div className="flex gap-4">
               <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-secondary">
-                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                <img src={product.image} alt={product.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               </div>
               <div>
                 <h3 className="font-display font-bold text-lg text-slate-900">{product.name}</h3>

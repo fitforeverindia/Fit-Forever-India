@@ -108,6 +108,7 @@ const EMPTY_FORM_DATA: {
   remoteType: string;
   charging: string;
   certifications: string[];
+  warranty: string;
   colorVariants: ColorVariant[];
 } = {
   name: '',
@@ -146,6 +147,7 @@ const EMPTY_FORM_DATA: {
   remoteType: '',
   charging: '',
   certifications: [],
+  warranty: '',
   colorVariants: [],
 };
 
@@ -163,6 +165,7 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState<string>('basic');
   const [showMarkdownPreview, setShowMarkdownPreview] = useState<boolean>(false);
+  const [slideImageDraft, setSlideImageDraft] = useState<string>('');
 
   // Form State
   const [formData, setFormData] = useState(EMPTY_FORM_DATA);
@@ -238,6 +241,7 @@ export default function AdminProductsPage() {
       remoteType: product.remoteType || '',
       charging: product.charging || '',
       certifications: product.certifications || [],
+      warranty: product.warranty || '',
       colorVariants: product.colorVariants || [],
     });
     setIsModalOpen(true);
@@ -390,12 +394,13 @@ export default function AdminProductsPage() {
       charging: formData.charging,
 
       certifications: formData.certifications,
+      warranty: formData.warranty,
       specifications: [
         { label: 'Model', value: formData.model || 'AM-333' },
         { label: 'Voltage', value: formData.ratedVoltage },
         { label: 'Power', value: formData.ratedPower },
         { label: 'Net Weight', value: formData.netWeight },
-        { label: 'Warranty', value: '3 Years On-Site Comprehensive Warranty' },
+        { label: 'Warranty', value: formData.warranty || '3 Years On-Site Comprehensive Warranty' },
       ],
     };
 
@@ -1122,6 +1127,17 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
+                {/* Warranty */}
+                <div className="pt-3 border-t border-slate-200 space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase text-slate-700">Warranty</Label>
+                  <Input
+                    placeholder="e.g. 3 Years On-Site Comprehensive Warranty, 1-Year Manufacturer Warranty"
+                    value={formData.warranty}
+                    onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-xs rounded-xl h-10"
+                  />
+                </div>
+
                 {/* Certifications Checkboxes */}
                 <div className="pt-3 border-t border-slate-200 space-y-2">
                   <Label className="text-xs font-semibold uppercase text-slate-700">
@@ -1184,7 +1200,41 @@ export default function AdminProductsPage() {
                     <div className="sm:col-span-2 text-[11px]">
                       <span className="text-slate-400">| Column 1 | Column 2 |</span> → Specification table
                     </div>
+                    <div className="sm:col-span-2 text-[11px]">
+                      <span className="text-slate-400">![alt text](image url)</span> → Embedded image / slide (use the uploader below to insert one automatically)
+                    </div>
                   </div>
+                </div>
+
+                {/* Insert Image / Slide into Description */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 space-y-2">
+                  <span className="font-display text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-primary" />
+                    Add Image / Slide to Description
+                  </span>
+                  <p className="text-[11px] text-slate-500">
+                    Upload a photo, feature graphic, or infographic slide to Cloudinary — it's inserted into the description automatically and renders as a full-width slide wherever you place it in the text.
+                  </p>
+                  <ImageUploadDropzone
+                    label=""
+                    value={slideImageDraft}
+                    onChange={(url) => {
+                      if (url) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          description:
+                            prev.description.replace(/\s+$/, '') +
+                            (prev.description.trim() ? '\n\n' : '') +
+                            `![Product Slide](${url})` +
+                            '\n\n',
+                        }));
+                        setSlideImageDraft('');
+                        toast.success('Image added to description');
+                      } else {
+                        setSlideImageDraft('');
+                      }
+                    }}
+                  />
                 </div>
 
                 {showMarkdownPreview ? (

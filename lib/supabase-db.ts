@@ -50,6 +50,7 @@ function mapProductSpecFields(p: Partial<Product>): any {
   if (p.remoteType !== undefined) row.remote_type = p.remoteType || null;
   if (p.charging !== undefined) row.charging = p.charging || null;
 
+  if (p.warranty !== undefined) row.warranty = p.warranty || null;
   if (p.certifications !== undefined) row.certifications = p.certifications || [];
   if (p.colorVariants !== undefined) row.color_variants = p.colorVariants || [];
   if (p.sizes !== undefined) row.sizes = p.sizes || [];
@@ -142,6 +143,14 @@ function mapRowToProduct(row: any): Product {
     bluetoothSpeaker: row.bluetooth_speaker || undefined,
     remoteType: row.remote_type || undefined,
     charging: row.charging || undefined,
+
+    warranty: row.warranty || undefined,
+
+    descriptionHtml: row.description_html || null,
+    specificationHtml: row.specification_html || null,
+    warrantyHtml: row.warranty_html || null,
+    faqs: Array.isArray(row.faqs) ? row.faqs : [],
+    videoUrl: row.video_url || null,
   };
 }
 
