@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Category, Product, Customer } from './types';
+import type { Category, Product, Customer, SavedAddress, Order, OrderItemDetail } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ezudcnndhboepasvlvas.supabase.co';
 const supabaseKey =
@@ -541,3 +541,373 @@ export async function deleteSupabaseCustomer(id: string): Promise<Customer[]> {
   }
   return getSupabaseCustomers();
 }
+
+// === CUSTOMER DASHBOARD SUPABASE HELPER FUNCTIONS ===
+
+export async function getCustomerById(customerId: string): Promise<Customer | null> {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error getting customer by ID:', error.message);
+      return null;
+    }
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      city: data.city || '',
+      state: data.state || '',
+      pincode: data.pincode || '',
+      address: data.address || '',
+      ordersCount: data.orders_count || 0,
+      totalSpent: Number(data.total_spent || 0),
+      joinedDate: data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : '2026-01-01',
+      status: (data.status as 'Active' | 'Inactive') || 'Active',
+      orderUpdates: data.order_updates ?? true,
+      promoNotifications: data.promo_notifications ?? false,
+    };
+  } catch (err) {
+    console.error('Error in getCustomerById:', err);
+    return null;
+  }
+}
+
+export async function getSavedAddresses(customerId: string): Promise<SavedAddress[]> {
+  try {
+    const { data, error } = await supabase
+      .from('customer_addresses')
+      .select('*')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching addresses:', error.message);
+      return [];
+    }
+
+    return (data || []).map((addr: any) => ({
+      id: addr.id,
+      customerId: addr.customer_id,
+      addressType: addr.address_type,
+      fullName: addr.full_name,
+      phoneNumber: addr.phone_number,
+      addressLine1: addr.address_line1,
+      addressLine2: addr.address_line2,
+      city: addr.city,
+      state: addr.state,
+      pinCode: addr.pin_code,
+      isDefault: addr.is_default,
+    }));
+  } catch (err) {
+    console.error('Error in getSavedAddresses:', err);
+    return [];
+  }
+}
+
+export async function createSavedAddress(customerId: string, address: Omit<SavedAddress, 'id'>): Promise<SavedAddress[]> {
+  try {
+    if (address.isDefault) {
+      await supabase
+        .from('customer_addresses')
+        .update({ is_default: false })
+        .eq('customer_id', customerId);
+    }
+
+    const { error } = await supabase.from('customer_addresses').insert([{
+      customer_id: customerId,
+      address_type: address.addressType,
+      full_name: address.fullName,
+      phone_number: address.phoneNumber,
+      address_line1: address.addressLine1,
+      address_line2: address.addressLine2 || null,
+      city: address.city,
+      state: address.state,
+      pin_code: address.pinCode,
+      is_default: address.isDefault,
+    }]);
+
+    if (error) {
+      console.error('Error creating address:', error.message);
+    }
+  } catch (err) {
+    console.error('Error in createSavedAddress:', err);
+  }
+  return getSavedAddresses(customerId);
+}
+
+export async function updateSavedAddress(customerId: string, addressId: string, updated: Partial<SavedAddress>): Promise<SavedAddress[]> {
+  try {
+    if (updated.isDefault) {
+      await supabase
+        .from('customer_addresses')
+        .update({ is_default: false })
+        .eq('customer_id', customerId);
+    }
+
+    const patch: any = {};
+    if (updated.addressType !== undefined) patch.address_type = updated.addressType;
+    if (updated.fullName !== undefined) patch.full_name = updated.fullName;
+    if (updated.phoneNumber !== undefined) patch.phone_number = updated.phoneNumber;
+    if (updated.addressLine1 !== undefined) patch.address_line1 = updated.addressLine1;
+    if (updated.addressLine2 !== undefined) patch.address_line2 = updated.addressLine2 || null;
+    if (updated.city !== undefined) patch.city = updated.city;
+    if (updated.state !== undefined) patch.state = updated.state;
+    if (updated.pinCode !== undefined) patch.pin_code = updated.pinCode;
+    if (updated.isDefault !== undefined) patch.is_default = updated.isDefault;
+
+    const { error } = await supabase
+      .from('customer_addresses')
+      .update(patch)
+      .eq('id', addressId);
+
+    if (error) {
+      console.error('Error updating address:', error.message);
+    }
+  } catch (err) {
+    console.error('Error in updateSavedAddress:', err);
+  }
+  return getSavedAddresses(customerId);
+}
+
+export async function deleteSavedAddress(customerId: string, addressId: string): Promise<SavedAddress[]> {
+  try {
+    const { error } = await supabase
+      .from('customer_addresses')
+      .delete()
+      .eq('id', addressId);
+
+    if (error) {
+      console.error('Error deleting address:', error.message);
+    }
+  } catch (err) {
+    console.error('Error in deleteSavedAddress:', err);
+  }
+  return getSavedAddresses(customerId);
+}
+
+export async function setDefaultAddress(customerId: string, addressId: string): Promise<SavedAddress[]> {
+  try {
+    await supabase
+      .from('customer_addresses')
+      .update({ is_default: false })
+      .eq('customer_id', customerId);
+
+    await supabase
+      .from('customer_addresses')
+      .update({ is_default: true })
+      .eq('id', addressId);
+  } catch (err) {
+    console.error('Error in setDefaultAddress:', err);
+  }
+  return getSavedAddresses(customerId);
+}
+
+export async function getCustomerOrders(customerId: string): Promise<Order[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          *,
+          products (
+            name,
+            image_url
+          )
+        )
+      `)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching orders:', error.message);
+      return [];
+    }
+
+    return (data || []).map((ord: any) => ({
+      id: ord.id,
+      customerId: ord.customer_id,
+      status: ord.status,
+      subtotal: Number(ord.subtotal),
+      shipping: Number(ord.shipping),
+      discount: Number(ord.discount),
+      total: Number(ord.total),
+      shippingName: ord.shipping_name,
+      shippingPhone: ord.shipping_phone,
+      shippingAddressLine1: ord.shipping_address_line1,
+      shippingAddressLine2: ord.shipping_address_line2,
+      shippingCity: ord.shipping_city,
+      shippingState: ord.shipping_state,
+      shippingPinCode: ord.shipping_pin_code,
+      createdAt: ord.created_at,
+      items: (ord.order_items || []).map((item: any) => ({
+        id: item.id,
+        orderId: item.order_id,
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: Number(item.price),
+        productName: item.products?.name || 'Premium Massage Chair',
+        productImage: item.products?.image_url || '',
+      })),
+    }));
+  } catch (err) {
+    console.error('Error in getCustomerOrders:', err);
+    return [];
+  }
+}
+
+export async function getCustomerOrderById(orderId: string, customerId: string): Promise<Order | null> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          *,
+          products (
+            name,
+            image_url
+          )
+        )
+      `)
+      .eq('id', orderId)
+      .eq('customer_id', customerId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching order by ID:', error.message);
+      return null;
+    }
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      customerId: data.customer_id,
+      status: data.status,
+      subtotal: Number(data.subtotal),
+      shipping: Number(data.shipping),
+      discount: Number(data.discount),
+      total: Number(data.total),
+      shippingName: data.shipping_name,
+      shippingPhone: data.shipping_phone,
+      shippingAddressLine1: data.shipping_address_line1,
+      shippingAddressLine2: data.shipping_address_line2,
+      shippingCity: data.shipping_city,
+      shippingState: data.shipping_state,
+      shippingPinCode: data.shipping_pin_code,
+      createdAt: data.created_at,
+      items: (data.order_items || []).map((item: any) => ({
+        id: item.id,
+        orderId: item.order_id,
+        productId: item.product_id,
+        quantity: item.quantity,
+        price: Number(item.price),
+        productName: item.products?.name || 'Premium Massage Chair',
+        productImage: item.products?.image_url || '',
+      })),
+    };
+  } catch (err) {
+    console.error('Error in getCustomerOrderById:', err);
+    return null;
+  }
+}
+
+export async function createCustomerOrder(
+  orderId: string,
+  customerId: string,
+  orderData: Omit<Order, 'id' | 'customerId' | 'createdAt'>,
+  items: Omit<OrderItemDetail, 'id' | 'orderId'>[]
+): Promise<void> {
+  try {
+    const { error: orderError } = await supabase.from('orders').insert([{
+      id: orderId,
+      customer_id: customerId,
+      status: orderData.status,
+      subtotal: orderData.subtotal,
+      shipping: orderData.shipping,
+      discount: orderData.discount,
+      total: orderData.total,
+      shipping_name: orderData.shippingName,
+      shipping_phone: orderData.shippingPhone,
+      shipping_address_line1: orderData.shippingAddressLine1,
+      shipping_address_line2: orderData.shippingAddressLine2 || null,
+      shipping_city: orderData.shippingCity,
+      shipping_state: orderData.shippingState,
+      shipping_pin_code: orderData.shippingPinCode,
+    }]);
+
+    if (orderError) {
+      throw new Error(`Order insertion error: ${orderError.message}`);
+    }
+
+    const itemRows = items.map((item) => ({
+      order_id: orderId,
+      product_id: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const { error: itemsError } = await supabase.from('order_items').insert(itemRows);
+    if (itemsError) {
+      throw new Error(`Order items insertion error: ${itemsError.message}`);
+    }
+  } catch (err) {
+    console.error('Error in createCustomerOrder:', err);
+    throw err;
+  }
+}
+
+export async function updateCustomerPreferences(
+  customerId: string,
+  orderUpdates: boolean,
+  promoNotifications: boolean
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .update({
+        order_updates: orderUpdates,
+        promo_notifications: promoNotifications,
+      })
+      .eq('id', customerId);
+
+    if (error) {
+      console.error('Error updating customer preferences:', error.message);
+    }
+  } catch (err) {
+    console.error('Error in updateCustomerPreferences:', err);
+  }
+}
+
+export async function updateCustomerProfile(
+  customerId: string,
+  name: string,
+  phone: string,
+  email: string
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .update({
+        name,
+        phone,
+        email,
+      })
+      .eq('id', customerId);
+
+    if (error) {
+      console.error('Error updating customer profile:', error.message);
+    }
+  } catch (err) {
+    console.error('Error in updateCustomerProfile:', err);
+  }
+}
+

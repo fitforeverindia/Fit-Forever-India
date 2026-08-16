@@ -14,7 +14,7 @@ export default function Footer() {
       ? dynamicCategories
       : CATEGORIES.map((c) => ({ slug: c.slug, name: c.name }));
 
-  if (pathname?.startsWith('/admin')) return null;
+  if (pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/signup') return null;
 
   return (
     <footer className="bg-foreground text-white">

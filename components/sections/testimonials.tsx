@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { TESTIMONIALS } from '@/lib/data';
 
 export function Testimonials() {
@@ -43,15 +43,6 @@ export function Testimonials() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPaused]);
 
-  // Manual scroll controls
-  const handleManualScroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const scrollAmount = 360;
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-  };
 
   return (
     <section className="bg-[#F8F9FA] py-8 sm:py-12 dark:bg-muted/20 overflow-hidden">
@@ -63,24 +54,6 @@ export function Testimonials() {
           <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Trusted By Thousands Across India
           </h2>
-        </div>
-
-        {/* Manual Swap Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => handleManualScroll('left')}
-            aria-label="Previous testimonials"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary dark:bg-card dark:border-border dark:text-foreground"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => handleManualScroll('right')}
-            aria-label="Next testimonials"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary dark:bg-card dark:border-border dark:text-foreground"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
         </div>
       </div>
 
@@ -95,10 +68,10 @@ export function Testimonials() {
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 sm:w-24 bg-gradient-to-r from-[#F8F9FA] to-transparent dark:from-background" />
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-12 sm:w-24 bg-gradient-to-l from-[#F8F9FA] to-transparent dark:from-background" />
 
-        {/* Scrollable Container with Hidden Scrollbar */}
+        {/* Scrollable Container with Hidden Scrollbar (scroll-smooth removed to prevent frame stutters) */}
         <div
           ref={scrollRef}
-          className="flex gap-6 sm:gap-8 overflow-x-auto scrollbar-none py-2 px-4 sm:px-8 scroll-smooth"
+          className="flex gap-6 sm:gap-8 overflow-x-auto scrollbar-none py-2 px-4 sm:px-8"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {duplicatedTestimonials.map((t, i) => (

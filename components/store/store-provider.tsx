@@ -8,7 +8,11 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { useCustomerAuth } from '@/lib/customer-auth';
 import type { CartItem, Product } from '@/lib/types';
+
 
 type StoreState = {
   cart: CartItem[];
@@ -39,6 +43,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
+  const router = useRouter();
+  const { user: customerUser } = useCustomerAuth();
+
   useEffect(() => {
     try {
       const c = localStorage.getItem(CART_KEY);
@@ -62,6 +69,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [wishlist, hydrated]);
 
   const addToCart = useCallback((product: Product, quantity = 1) => {
+    if (!customerUser) {
+      toast.error('Please log in or sign up to access your cart.');
+      router.push('/login');
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -74,7 +86,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return [...prev, { product, quantity }];
     });
     setIsCartOpen(true);
-  }, []);
+  }, [customerUser, router]);
 
   const removeFromCart = useCallback((productId: string) => {
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
@@ -93,12 +105,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => setCart([]), []);
 
   const toggleWishlist = useCallback((product: Product) => {
+    if (!customerUser) {
+      toast.error('Please log in or sign up to access your wishlist.');
+      router.push('/login');
+      return;
+    }
     setWishlist((prev) =>
       prev.some((p) => p.id === product.id)
         ? prev.filter((p) => p.id !== product.id)
         : [...prev, product]
     );
-  }, []);
+  }, [customerUser, router]);
+
 
   const isInWishlist = useCallback(
     (productId: string) => wishlist.some((p) => p.id === productId),

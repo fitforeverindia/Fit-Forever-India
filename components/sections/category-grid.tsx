@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { useCategoriesStore } from '@/lib/categories-store';
 import type { Category } from '@/lib/types';
 
@@ -22,10 +22,6 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
   // Auto-scroll effect optimized for 60-120fps GPU performance
   useEffect(() => {
     if (displayCategories.length <= 4) return;
-
-    // Disable JS scroll loop on mobile touch devices to allow 100% native 120Hz GPU touch scrolling without hanging
-    const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    if (isTouch) return;
 
     let animationFrameId: number;
     let lastTime = performance.now();
@@ -50,25 +46,6 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
     return () => cancelAnimationFrame(animationFrameId);
   }, [isPaused, displayCategories.length]);
 
-  const handleManualScroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    setIsPaused(true);
-
-    const container = scrollRef.current;
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-    const scrollAmount = isMobile ? 180 : 280;
-    const targetLeft = direction === 'left' ? container.scrollLeft - scrollAmount : container.scrollLeft + scrollAmount;
-
-    container.scrollTo({
-      left: targetLeft,
-      behavior: 'smooth',
-    });
-
-    setTimeout(() => {
-      setIsPaused(false);
-    }, 1200);
-  };
-
   if (categories.length === 0) {
     return null;
   }
@@ -86,24 +63,6 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
               CATEGORIES
             </h2>
           </div>
-
-          {/* Manual Scroll Controls - Always Available */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => handleManualScroll('left')}
-              aria-label="Previous categories"
-              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary active:scale-95 dark:bg-card dark:border-border"
-            >
-              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-            <button
-              onClick={() => handleManualScroll('right')}
-              aria-label="Next categories"
-              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-foreground shadow-sm transition-all hover:bg-primary hover:text-white hover:border-primary active:scale-95 dark:bg-card dark:border-border"
-            >
-              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-          </div>
         </div>
 
         {/* Carousel Container */}
@@ -114,10 +73,10 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
           onTouchStart={() => setIsPaused(true)}
           onTouchEnd={() => setIsPaused(false)}
         >
-          {/* Scrollable Container */}
+          {/* Scrollable Container (scroll-smooth removed to prevent auto-scrolling stutter) */}
           <div
             ref={scrollRef}
-            className={`flex gap-6 sm:gap-8 lg:gap-10 overflow-x-auto scrollbar-none py-2 scroll-smooth touch-pan-x overscroll-x-contain ${
+            className={`flex gap-6 sm:gap-8 lg:gap-10 overflow-x-auto scrollbar-none py-2 touch-pan-x overscroll-x-contain ${
               categories.length <= 4 ? 'justify-start sm:justify-center' : ''
             }`}
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}

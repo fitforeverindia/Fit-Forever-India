@@ -130,6 +130,62 @@ export type Customer = {
   totalSpent: number;
   joinedDate: string;
   status: 'Active' | 'Inactive';
+  orderUpdates?: boolean;
+  promoNotifications?: boolean;
 };
+
+export type SiteUser = {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  createdAt: string;
+};
+
+export type SavedAddress = {
+  id: string;
+  customerId: string;
+  addressType: string;
+  fullName: string;
+  phoneNumber: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  pinCode: string;
+  isDefault: boolean;
+  createdAt?: string;
+};
+
+export type Order = {
+  id: string;
+  customerId: string;
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  total: number;
+  shippingName: string;
+  shippingPhone: string;
+  shippingAddressLine1: string;
+  shippingAddressLine2?: string | null;
+  shippingCity: string;
+  shippingState: string;
+  shippingPinCode: string;
+  createdAt: string;
+  items?: OrderItemDetail[];
+};
+
+export type OrderItemDetail = {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  price: number;
+  productName?: string;
+  productImage?: string;
+};
+
+
 
 

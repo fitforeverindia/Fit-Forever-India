@@ -2,23 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, Heart, Menu, Phone, ShoppingBag, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useStore } from '@/components/store/store-provider';
 import { useCategoriesStore } from '@/lib/categories-store';
+import { useCustomerAuth } from '@/lib/customer-auth';
 import { SITE, NAV_LINKS, CATEGORIES, CATEGORY_IMAGES } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
+
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsHovered, setProductsHovered] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
   const { cartCount, wishlist, setCartOpen, setWishlistOpen } = useStore();
+  const { user: customerUser, logout: customerLogout } = useCustomerAuth();
+
 
   const { categories: dynamicCategories } = useCategoriesStore();
   const displayCategories =
@@ -43,7 +52,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  if (isAdminRoute) return null;
+  const isAuthRoute = pathname === '/login' || pathname === '/signup';
+  if (isAdminRoute || isAuthRoute) return null;
+
 
 
   return (
@@ -92,7 +103,7 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       className={cn(
-                        'relative inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+                        'relative inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap',
                         overHero
                           ? 'text-white/90 hover:text-white'
                           : 'text-foreground/70 hover:text-foreground',
@@ -181,7 +192,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className={cn(
-                      'relative rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+                      'relative rounded-full px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap',
                       overHero
                         ? 'text-white/90 hover:text-white'
                         : 'text-foreground/70 hover:text-foreground',
@@ -213,7 +224,14 @@ export default function Navbar() {
                 'relative rounded-full',
                 overHero && 'text-white hover:bg-white/10 hover:text-white'
               )}
-              onClick={() => setWishlistOpen(true)}
+              onClick={() => {
+                if (!customerUser) {
+                  toast.error('Please log in or sign up to access your wishlist.');
+                  router.push('/login');
+                } else {
+                  setWishlistOpen(true);
+                }
+              }}
             >
               <Heart className="h-5 w-5" />
               {wishlist.length > 0 && (
@@ -230,7 +248,14 @@ export default function Navbar() {
                 'relative rounded-full',
                 overHero && 'text-white hover:bg-white/10 hover:text-white'
               )}
-              onClick={() => setCartOpen(true)}
+              onClick={() => {
+                if (!customerUser) {
+                  toast.error('Please log in or sign up to access your cart.');
+                  router.push('/login');
+                } else {
+                  setCartOpen(true);
+                }
+              }}
             >
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
@@ -239,6 +264,89 @@ export default function Navbar() {
                 </span>
               )}
             </Button>
+
+            {/* Customer Authentication */}
+            {!customerUser ? (
+              <div className="hidden lg:flex items-center gap-1.5">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'rounded-full font-semibold px-3.5',
+                    overHero ? 'text-white hover:bg-white/10 hover:text-white' : 'text-foreground/80 hover:text-foreground'
+                  )}
+                >
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90 px-4"
+                >
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-1.5 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 p-1"
+                >
+                  <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary font-display text-xs sm:text-sm font-bold text-white shadow-sm ring-1 ring-white/10 transition-transform hover:scale-105">
+                    {customerUser.name ? customerUser.name.trim().charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span
+                    className={cn(
+                      'hidden md:inline-flex items-center gap-1 text-sm font-semibold',
+                      overHero ? 'text-white' : 'text-foreground'
+                    )}
+                  >
+                    {customerUser.name.split(' ')[0]}
+                    <ChevronDown className="h-3 w-3 opacity-70" />
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <>
+                      {/* Invisible backdrop to dismiss dropdown */}
+                      <div className="fixed inset-0 z-40 cursor-default" onClick={() => setDropdownOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-48 origin-top-right rounded-2xl border border-slate-100 bg-white p-2 shadow-xl dark:bg-card dark:border-border z-50 text-slate-800 dark:text-foreground text-left"
+                      >
+                        <div className="px-3 py-2 border-b border-slate-50 dark:border-border mb-1.5">
+                          <p className="text-xs font-bold truncate">{customerUser.name}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-muted-foreground truncate">{customerUser.email}</p>
+                        </div>
+                        <Link
+                          href="/account"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex w-full items-center rounded-xl px-3 py-2 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-muted/50 transition-colors"
+                        >
+                          My Account
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            customerLogout();
+                          }}
+                          className="flex w-full items-center rounded-xl px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                        >
+                          Logout
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             <Button
               asChild
               size="sm"
@@ -269,78 +377,131 @@ export default function Navbar() {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col justify-between">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <div className="flex h-16 items-center justify-between border-b px-5">
-            <span className="font-sans text-lg font-bold">Menu</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <div>
+            <div className="flex h-16 items-center justify-between border-b px-5">
+              <span className="font-sans text-lg font-bold">Menu</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
 
-          <ul className="flex flex-col p-3 overflow-y-auto space-y-1">
-            {NAV_LINKS.map((link) => {
-              if (link.href === '/products') {
+            {customerUser && (
+              <div className="flex items-center gap-3 px-5 py-4 border-b bg-slate-50/50 dark:bg-muted/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-white shadow-sm ring-1 ring-white/10">
+                  {customerUser.name ? customerUser.name.trim().charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-slate-800 dark:text-foreground truncate">{customerUser.name}</p>
+                  <p className="text-xs text-slate-400 dark:text-muted-foreground truncate">{customerUser.email}</p>
+                </div>
+              </div>
+            )}
+
+            <ul className="flex flex-col p-3 overflow-y-auto space-y-1">
+              {NAV_LINKS.map((link) => {
+                if (link.href === '/products') {
+                  return (
+                    <li key={link.href}>
+                      <button
+                        onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
+                        className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted"
+                      >
+                        <span>{link.label}</span>
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 transition-transform',
+                            mobileProductsOpen && 'rotate-180'
+                          )}
+                        />
+                      </button>
+
+                      {mobileProductsOpen && (
+                        <div className="pl-4 pr-2 py-2 space-y-1 bg-slate-50 dark:bg-muted/30 rounded-xl my-1">
+                          <Link
+                            href="/products"
+                            onClick={() => setMobileOpen(false)}
+                            className="block rounded-lg px-3 py-2 text-xs font-bold text-primary"
+                          >
+                            All Products →
+                          </Link>
+                          {displayCategories.map((cat) => (
+                            <Link
+                              key={cat.slug}
+                              href={`/products?category=${cat.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="block rounded-lg px-3 py-1.5 text-xs text-slate-600 hover:text-primary dark:text-muted-foreground"
+                            >
+                              {cat.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                }
+
                 return (
                   <li key={link.href}>
-                    <button
-                      onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
-                      className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted"
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'block rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted',
+                        pathname === link.href && 'bg-slate-100 text-primary dark:bg-muted'
+                      )}
                     >
-                      <span>{link.label}</span>
-                      <ChevronDown
-                        className={cn(
-                          'h-4 w-4 transition-transform',
-                          mobileProductsOpen && 'rotate-180'
-                        )}
-                      />
-                    </button>
-
-                    {mobileProductsOpen && (
-                      <div className="pl-4 pr-2 py-2 space-y-1 bg-slate-50 dark:bg-muted/30 rounded-xl my-1">
-                        <Link
-                          href="/products"
-                          onClick={() => setMobileOpen(false)}
-                          className="block rounded-lg px-3 py-2 text-xs font-bold text-primary"
-                        >
-                          All Products →
-                        </Link>
-                        {displayCategories.map((cat) => (
-                          <Link
-                            key={cat.slug}
-                            href={`/products?category=${cat.slug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="block rounded-lg px-3 py-1.5 text-xs text-slate-600 hover:text-primary dark:text-muted-foreground"
-                          >
-                            {cat.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                      {link.label}
+                    </Link>
                   </li>
                 );
-              }
+              })}
 
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'block rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted',
-                      pathname === link.href && 'bg-slate-100 text-primary dark:bg-muted'
-                    )}
-                  >
-                    {link.label}
+              {customerUser ? (
+                <>
+                  <li className="border-t my-2 pt-2">
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileOpen(false)}
+                      className="block rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted text-foreground/80"
+                    >
+                      My Account
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        customerLogout();
+                      }}
+                      className="flex w-full items-center rounded-xl px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/10 transition-colors text-left"
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : null}
+            </ul>
+          </div>
+
+          <div className="border-t p-4 mt-auto space-y-2">
+            {!customerUser && (
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <Button asChild variant="outline" className="w-full rounded-full font-semibold">
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                    Login
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="border-t p-4 mt-auto">
+                </Button>
+                <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold">
+                  <Link href="/signup" onClick={() => setMobileOpen(false)}>
+                    Sign Up
+                  </Link>
+                </Button>
+              </div>
+            )}
             <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold">
               <a href={`tel:${SITE.headOfficePhone}`}>
                 <Phone className="mr-2 h-4 w-4" />
