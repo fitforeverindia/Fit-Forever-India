@@ -4,8 +4,9 @@ import { useCustomerAuth } from '@/lib/customer-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Settings, ChevronRight, Loader2 } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageLoader } from '@/components/ui/page-loader';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useCustomerAuth();
@@ -21,8 +22,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (loading) {
     return (
       <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center bg-slate-50/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-3 text-xs font-semibold text-slate-500">Loading your account dashboard...</p>
+        <PageLoader message="Loading your account dashboard..." />
       </div>
     );
   }
@@ -30,7 +30,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   if (!user) {
     return (
       <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center bg-slate-50/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <PageLoader />
       </div>
     );
   }

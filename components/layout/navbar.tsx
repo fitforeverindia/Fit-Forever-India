@@ -3,7 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronDown, Heart, Menu, Phone, ShoppingBag, X, ArrowRight } from 'lucide-react';
+import {
+  ChevronDown,
+  Heart,
+  Home,
+  Image as ImageIcon,
+  Info,
+  MapPin,
+  Menu,
+  Package,
+  Phone,
+  ShoppingBag,
+  User,
+  ArrowRight,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -41,9 +54,18 @@ export default function Navbar() {
           image: CATEGORY_IMAGES[c.slug] || '',
         }));
 
+  const NAV_ICONS: Record<string, typeof Home> = {
+    '/': Home,
+    '/products': Package,
+    '/gallery': ImageIcon,
+    '/about': Info,
+    '/outlets': MapPin,
+    '/contact': Phone,
+  };
+
   const isAdminRoute = pathname?.startsWith('/admin');
   const isHome = pathname === '/';
-  const overHero = isHome && !scrolled && !productsHovered;
+  const overHero = false;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -61,27 +83,25 @@ export default function Navbar() {
     <>
       <header
         className={cn(
-          'fixed inset-x-0 top-0 z-50 transition-all duration-300',
+          'sticky top-0 z-50 transition-all duration-300',
           overHero
             ? 'bg-transparent'
-            : 'glass-nav border-b border-border shadow-soft bg-white/95 dark:bg-card/95 backdrop-blur-md'
+            : 'glass-nav border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95',
+          scrolled ? 'shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)]' : 'shadow-soft'
         )}
       >
         <nav className="container-fit flex h-16 items-center justify-between gap-4 lg:h-20">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <Link href="/" className="group flex items-center gap-2.5 shrink-0">
             <img
               src={SITE.logo}
               alt="Fit Forever India"
-              className="h-9 w-9 rounded-full object-cover ring-1 ring-border lg:h-11 lg:w-11"
+              className="h-12 w-12 rounded-full object-cover ring-1 ring-border transition-transform duration-300 group-hover:scale-105 group-hover:ring-primary/40 lg:h-16 lg:w-16"
             />
-            <span
-              className={cn(
-                'font-sans text-lg font-bold leading-none tracking-tight lg:text-xl',
-                overHero ? 'text-white' : 'text-foreground'
-              )}
-            >
-              Fit Forever
-              <span className="block text-[10px] font-normal uppercase tracking-[0.25em] opacity-70">
+            <span className="flex flex-col justify-center leading-tight">
+              <span className="font-sans text-base font-bold tracking-tight text-foreground lg:text-lg">
+                Fit Forever
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
                 India
               </span>
             </span>
@@ -103,7 +123,7 @@ export default function Navbar() {
                     <Link
                       href={link.href}
                       className={cn(
-                        'relative inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap',
+                        'relative inline-flex items-center gap-1 rounded-full px-4 py-2 text-base font-semibold transition-all duration-300 whitespace-nowrap hover:bg-primary/5',
                         overHero
                           ? 'text-white/90 hover:text-white'
                           : 'text-foreground/70 hover:text-foreground',
@@ -121,8 +141,8 @@ export default function Navbar() {
                         <motion.span
                           layoutId="nav-active"
                           className={cn(
-                            'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full',
-                            overHero ? 'bg-white' : 'bg-primary'
+                            'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)]',
+                            overHero ? 'bg-white' : 'bg-primary shadow-primary/60'
                           )}
                         />
                       )}
@@ -136,43 +156,44 @@ export default function Navbar() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.98 }}
                           transition={{ duration: 0.2, ease: 'easeOut' }}
-                          className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-[640px] z-50"
+                          className="absolute left-1/2 -translate-x-1/2 top-full pt-3 w-[680px] z-50"
                         >
-                          <div className="rounded-[28px] border border-slate-100 bg-white p-6 shadow-2xl dark:bg-card dark:border-border">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-border">
-                              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                          <div className="overflow-hidden rounded-[28px] border border-slate-100 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] dark:bg-card dark:border-border">
+                            <div className="flex items-center justify-between bg-gradient-to-r from-primary/5 via-transparent to-transparent px-6 py-4 border-b border-slate-100 dark:border-border">
+                              <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                                 All Categories ({displayCategories.length})
                               </span>
                               <Link
                                 href="/products"
                                 onClick={() => setProductsHovered(false)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-primary transition-colors dark:text-foreground"
+                                className="group inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-primary transition-colors dark:text-foreground"
                               >
                                 View All Products
-                                <ArrowRight className="h-3 w-3" />
+                                <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
                               </Link>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 gap-2 p-4">
                               {displayCategories.map((cat) => (
                                 <Link
                                   key={cat.slug}
                                   href={`/products?category=${cat.slug}`}
                                   onClick={() => setProductsHovered(false)}
-                                  className="group flex items-center gap-3 rounded-2xl p-2.5 transition-all hover:bg-slate-50 dark:hover:bg-muted/50"
+                                  className="group flex items-center gap-3 rounded-2xl p-2.5 transition-all duration-300 hover:bg-primary/5"
                                 >
-                                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-muted p-1">
+                                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100 transition-all duration-300 group-hover:ring-primary/40 group-hover:shadow-md dark:bg-muted dark:ring-border">
                                     <img
                                       src={cat.image || CATEGORY_IMAGES[cat.slug] || ''}
                                       alt={cat.name}
                                       className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
                                     />
                                   </div>
-                                  <div>
+                                  <div className="min-w-0">
                                     <h4 className="font-sans text-xs font-bold text-slate-900 group-hover:text-primary transition-colors dark:text-foreground">
                                       {cat.name}
                                     </h4>
-                                    <p className="text-[10px] text-slate-400 line-clamp-1 dark:text-muted-foreground">
+                                    <p className="mt-0.5 text-[10px] text-slate-400 line-clamp-1 dark:text-muted-foreground">
                                       {cat.description}
                                     </p>
                                   </div>
@@ -192,7 +213,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className={cn(
-                      'relative rounded-full px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap',
+                      'relative rounded-full px-4 py-2 text-base font-semibold transition-all duration-300 whitespace-nowrap hover:bg-primary/5',
                       overHero
                         ? 'text-white/90 hover:text-white'
                         : 'text-foreground/70 hover:text-foreground',
@@ -204,8 +225,8 @@ export default function Navbar() {
                       <motion.span
                         layoutId="nav-active"
                         className={cn(
-                          'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full',
-                          overHero ? 'bg-white' : 'bg-primary'
+                          'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)]',
+                          overHero ? 'bg-white' : 'bg-primary shadow-primary/60'
                         )}
                       />
                     )}
@@ -221,7 +242,7 @@ export default function Navbar() {
               size="icon"
               aria-label="Wishlist"
               className={cn(
-                'relative rounded-full',
+                'relative rounded-full transition-all duration-300 hover:scale-110 hover:bg-primary/10',
                 overHero && 'text-white hover:bg-white/10 hover:text-white'
               )}
               onClick={() => {
@@ -235,7 +256,7 @@ export default function Navbar() {
             >
               <Heart className="h-5 w-5" />
               {wishlist.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-[0_0_8px_rgba(239,68,68,0.6)]">
                   {wishlist.length}
                 </span>
               )}
@@ -245,7 +266,7 @@ export default function Navbar() {
               size="icon"
               aria-label="Cart"
               className={cn(
-                'relative rounded-full',
+                'relative rounded-full transition-all duration-300 hover:scale-110 hover:bg-primary/10',
                 overHero && 'text-white hover:bg-white/10 hover:text-white'
               )}
               onClick={() => {
@@ -259,7 +280,7 @@ export default function Navbar() {
             >
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-[0_0_8px_rgba(0,0,0,0.3)] shadow-primary/60">
                   {cartCount}
                 </span>
               )}
@@ -267,33 +288,27 @@ export default function Navbar() {
 
             {/* Customer Authentication */}
             {!customerUser ? (
-              <div className="hidden lg:flex items-center gap-1.5">
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'rounded-full font-semibold px-3.5',
-                    overHero ? 'text-white hover:bg-white/10 hover:text-white' : 'text-foreground/80 hover:text-foreground'
-                  )}
-                >
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className="rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90 px-4"
-                >
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </div>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                aria-label="Account"
+                className={cn(
+                  'rounded-full transition-all duration-300 hover:scale-110 hover:bg-primary/10',
+                  overHero && 'text-white hover:bg-white/10 hover:text-white'
+                )}
+              >
+                <Link href="/login">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
             ) : (
               <div className="relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-1.5 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 p-1"
                 >
-                  <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary font-display text-xs sm:text-sm font-bold text-white shadow-sm ring-1 ring-white/10 transition-transform hover:scale-105">
+                  <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary font-display text-xs sm:text-sm font-bold text-white shadow-md shadow-primary/30 ring-1 ring-white/10 transition-all duration-300 hover:scale-110 hover:shadow-primary/50">
                     {customerUser.name ? customerUser.name.trim().charAt(0).toUpperCase() : 'U'}
                   </div>
                   <span
@@ -350,7 +365,7 @@ export default function Navbar() {
             <Button
               asChild
               size="sm"
-              className="hidden rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+              className="hidden rounded-full bg-primary font-semibold text-primary-foreground shadow-md shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/40 sm:inline-flex"
             >
               <a href={`tel:${SITE.headOfficePhone}`}>
                 <Phone className="mr-1.5 h-4 w-4" />
@@ -362,7 +377,7 @@ export default function Navbar() {
               size="icon"
               aria-label="Menu"
               className={cn(
-                'lg:hidden rounded-full',
+                'lg:hidden rounded-full transition-all duration-300 hover:scale-110 hover:bg-primary/10',
                 overHero && 'text-white hover:bg-white/10 hover:text-white'
               )}
               onClick={() => setMobileOpen(true)}
@@ -378,20 +393,16 @@ export default function Navbar() {
         <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col justify-between">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div>
-            <div className="flex h-16 items-center justify-between border-b px-5">
-              <span className="font-sans text-lg font-bold">Menu</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
+            <div className="flex h-16 items-center justify-between border-b bg-gradient-to-r from-primary/5 via-transparent to-transparent px-5">
+              <span className="inline-flex items-center gap-2 font-sans text-lg font-bold">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                Menu
+              </span>
             </div>
 
             {customerUser && (
               <div className="flex items-center gap-3 px-5 py-4 border-b bg-slate-50/50 dark:bg-muted/10">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-white shadow-sm ring-1 ring-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-white shadow-md shadow-primary/30 ring-1 ring-white/10">
                   {customerUser.name ? customerUser.name.trim().charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -403,38 +414,55 @@ export default function Navbar() {
 
             <ul className="flex flex-col p-3 overflow-y-auto space-y-1">
               {NAV_LINKS.map((link) => {
+                const LinkIcon = NAV_ICONS[link.href] ?? Package;
+                const linkActive = pathname === link.href;
+
                 if (link.href === '/products') {
                   return (
                     <li key={link.href}>
                       <button
                         onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
-                        className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted"
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300 hover:bg-primary/5',
+                          mobileProductsOpen && 'bg-primary/5 text-primary'
+                        )}
                       >
-                        <span>{link.label}</span>
+                        <span className="flex items-center gap-3">
+                          <LinkIcon className="h-4 w-4 text-primary" />
+                          {link.label}
+                        </span>
                         <ChevronDown
                           className={cn(
-                            'h-4 w-4 transition-transform',
+                            'h-4 w-4 transition-transform duration-300',
                             mobileProductsOpen && 'rotate-180'
                           )}
                         />
                       </button>
 
                       {mobileProductsOpen && (
-                        <div className="pl-4 pr-2 py-2 space-y-1 bg-slate-50 dark:bg-muted/30 rounded-xl my-1">
+                        <div className="my-1 space-y-1 rounded-2xl bg-slate-50 p-2 dark:bg-muted/30">
                           <Link
                             href="/products"
                             onClick={() => setMobileOpen(false)}
-                            className="block rounded-lg px-3 py-2 text-xs font-bold text-primary"
+                            className="flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10"
                           >
-                            All Products →
+                            All Products
+                            <ArrowRight className="h-3 w-3" />
                           </Link>
                           {displayCategories.map((cat) => (
                             <Link
                               key={cat.slug}
                               href={`/products?category=${cat.slug}`}
                               onClick={() => setMobileOpen(false)}
-                              className="block rounded-lg px-3 py-1.5 text-xs text-slate-600 hover:text-primary dark:text-muted-foreground"
+                              className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-white hover:text-primary dark:text-muted-foreground dark:hover:bg-card"
                             >
+                              <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 dark:border-border dark:bg-card">
+                                <img
+                                  src={cat.image || CATEGORY_IMAGES[cat.slug] || ''}
+                                  alt={cat.name}
+                                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                                />
+                              </span>
                               {cat.name}
                             </Link>
                           ))}
@@ -450,10 +478,11 @@ export default function Navbar() {
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        'block rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted',
-                        pathname === link.href && 'bg-slate-100 text-primary dark:bg-muted'
+                        'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300 hover:bg-primary/5',
+                        linkActive && 'bg-primary/10 text-primary'
                       )}
                     >
+                      <LinkIcon className={cn('h-4 w-4', linkActive ? 'text-primary' : 'text-slate-400')} />
                       {link.label}
                     </Link>
                   </li>
@@ -466,8 +495,9 @@ export default function Navbar() {
                     <Link
                       href="/account"
                       onClick={() => setMobileOpen(false)}
-                      className="block rounded-xl px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-100 dark:hover:bg-muted text-foreground/80"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-all duration-300 hover:bg-primary/5"
                     >
+                      <User className="h-4 w-4 text-slate-400" />
                       My Account
                     </Link>
                   </li>
@@ -477,7 +507,7 @@ export default function Navbar() {
                         setMobileOpen(false);
                         customerLogout();
                       }}
-                      className="flex w-full items-center rounded-xl px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/10 transition-colors text-left"
+                      className="flex w-full items-center rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/10 text-left"
                     >
                       Logout
                     </button>
@@ -490,19 +520,19 @@ export default function Navbar() {
           <div className="border-t p-4 mt-auto space-y-2">
             {!customerUser && (
               <div className="grid grid-cols-2 gap-2 mb-2">
-                <Button asChild variant="outline" className="w-full rounded-full font-semibold">
+                <Button asChild variant="outline" className="w-full rounded-full font-semibold transition-all duration-300 hover:-translate-y-0.5">
                   <Link href="/login" onClick={() => setMobileOpen(false)}>
                     Login
                   </Link>
                 </Button>
-                <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold">
+                <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold shadow-md shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/40">
                   <Link href="/signup" onClick={() => setMobileOpen(false)}>
                     Sign Up
                   </Link>
                 </Button>
               </div>
             )}
-            <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold">
+            <Button asChild className="w-full rounded-full bg-primary text-primary-foreground font-semibold shadow-md shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/40">
               <a href={`tel:${SITE.headOfficePhone}`}>
                 <Phone className="mr-2 h-4 w-4" />
                 {SITE.headOfficePhone}

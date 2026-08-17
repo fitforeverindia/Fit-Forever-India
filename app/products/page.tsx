@@ -4,9 +4,10 @@ import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, SlidersHorizontal, Grid3X3, Grid2X2, RotateCcw } from 'lucide-react';
 import { ProductCard } from '@/components/store/product-card';
-import { CategoryFilter } from '@/components/store/category-filter';
 import { PaginationControl } from '@/components/ui/pagination-control';
+import { PageLoader } from '@/components/ui/page-loader';
 import { useProductsStore } from '@/lib/products-store';
+import { useCategoriesStore } from '@/lib/categories-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { Product } from '@/lib/types';
@@ -19,31 +20,30 @@ function ProductsContent() {
   const initialCategory = searchParams.get('category');
 
   const { products } = useProductsStore();
+  const { categories } = useCategoriesStore();
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    return initialCategory ? [initialCategory] : ['all'];
-  });
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
   const [currentPage, setCurrentPage] = useState(1);
   const [gridCols, setGridCols] = useState<'3' | '2'>('3');
 
-  // Update categories if URL parameter changes
+  // Update category if URL parameter changes
   useEffect(() => {
-    if (initialCategory) {
-      setSelectedCategories([initialCategory]);
-    } else {
-      setSelectedCategories(['all']);
-    }
+    setSelectedCategory(initialCategory || 'all');
   }, [initialCategory]);
 
+  const activeCategory = useMemo(
+    () => categories.find((c) => c.slug === selectedCategory) || null,
+    [categories, selectedCategory]
+  );
+
   // Reset page to 1 when filters change and sync URL
-  const handleCategoryChange = (slugs: string[]) => {
-    setSelectedCategories(slugs);
+  const handleCategoryChange = (slug: string) => {
+    setSelectedCategory(slug);
     setCurrentPage(1);
-    const firstActive = slugs.find((s) => s !== 'all');
-    if (firstActive) {
-      router.push(`/products?category=${firstActive}`, { scroll: false });
+    if (slug && slug !== 'all') {
+      router.push(`/products?category=${slug}`, { scroll: false });
     } else {
       router.push('/products', { scroll: false });
     }
@@ -68,24 +68,21 @@ function ProductsContent() {
       }
 
       // Category filter
-      if (selectedCategories.length === 0 || selectedCategories.includes('all')) {
+      if (!selectedCategory || selectedCategory === 'all') {
         return true;
       }
 
       const pCatSlug = (product.categorySlug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const pCatName = (product.categoryName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const targetClean = selectedCategory.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-      return selectedCategories.some((catSlug) => {
-        const targetClean = catSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (!targetClean || targetClean === 'all') return true;
-        return (
-          pCatSlug === targetClean ||
-          pCatName === targetClean ||
-          (pCatSlug.length > 2 && targetClean.length > 2 && (pCatSlug.includes(targetClean) || targetClean.includes(pCatSlug)))
-        );
-      });
+      return (
+        pCatSlug === targetClean ||
+        pCatName === targetClean ||
+        (pCatSlug.length > 2 && targetClean.length > 2 && (pCatSlug.includes(targetClean) || targetClean.includes(pCatSlug)))
+      );
     });
-  }, [products, selectedCategories, searchQuery]);
+  }, [products, selectedCategory, searchQuery]);
 
   // Sort products
   const sortedProducts = useMemo(() => {
@@ -110,15 +107,41 @@ function ProductsContent() {
   }, [sortedProducts, currentPage]);
 
   const resetFilters = () => {
-    setSelectedCategories(['all']);
+    handleCategoryChange('all');
     setSearchQuery('');
     setSortBy('featured');
     setCurrentPage(1);
   };
 
   return (
-    <div className="min-h-screen bg-white pt-24 pb-16 dark:bg-slate-950">
-      <div className="container-fit">
+    <div className="min-h-screen bg-white pb-16 dark:bg-slate-950">
+      {/* Category Banner */}
+      {activeCategory && activeCategory.bannerImage ? (
+        <div className="relative flex aspect-[8/7] w-full items-center justify-center overflow-hidden bg-slate-100 sm:aspect-[5/2] dark:bg-slate-900">
+          {/* Blurred fill so there are no empty letterbox bars if the viewport ratio differs slightly */}
+          <picture>
+            <source media="(min-width: 640px)" srcSet={activeCategory.bannerImage} />
+            <img
+              src={activeCategory.bannerImageMobile || activeCategory.bannerImage}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl"
+            />
+          </picture>
+          <picture>
+            <source media="(min-width: 640px)" srcSet={activeCategory.bannerImage} />
+            <img
+              src={activeCategory.bannerImageMobile || activeCategory.bannerImage}
+              alt={activeCategory.name}
+              className="relative h-full w-full object-contain"
+            />
+          </picture>
+        </div>
+      ) : (
+        <div className="h-24" />
+      )}
+
+      <div className="container-fit pt-8">
         {/* Filter Toolbar & Search */}
         <div className="mb-8 flex flex-col gap-4 rounded-3xl bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-card">
           <div className="relative flex-1">
@@ -133,6 +156,20 @@ function ProductsContent() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Categories Dropdown */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className="h-11 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1E1E1E] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.slug}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+
             {/* Sort Dropdown */}
             <select
               value={sortBy}
@@ -169,19 +206,8 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Main Content Layout: Left Sidebar + Right Products Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-          {/* Left Category Sidebar */}
-          <div className="lg:col-span-1">
-            <CategoryFilter
-              selectedCategories={selectedCategories}
-              onChange={handleCategoryChange}
-              className="sticky top-24"
-            />
-          </div>
-
-          {/* Right Product Grid Area */}
-          <div className="lg:col-span-3 flex flex-col justify-between">
+        {/* Products Grid */}
+        <div className="flex flex-col justify-between">
             <div>
               {/* Active Filter Indicators & Result Summary */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 pb-4 dark:border-slate-800">
@@ -191,7 +217,7 @@ function ProductsContent() {
                   </span>
                 </div>
 
-                {(!selectedCategories.includes('all') || searchQuery) && (
+                {(selectedCategory !== 'all' || searchQuery) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -207,7 +233,7 @@ function ProductsContent() {
               {/* Products Display */}
               {paginatedProducts.length > 0 ? (
                 <div
-                  className={`grid gap-6 items-start sm:grid-cols-2 ${
+                  className={`grid grid-cols-2 gap-3 sm:gap-6 items-start ${
                     gridCols === '3' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
                   }`}
                 >
@@ -247,7 +273,6 @@ function ProductsContent() {
                 />
               </div>
             )}
-          </div>
         </div>
       </div>
     </div>
@@ -257,9 +282,8 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen pt-32 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#1E1E1E] border-t-transparent"></div>
-        <p className="mt-4 text-sm text-slate-500">Loading products...</p>
+      <div className="min-h-screen pt-32">
+        <PageLoader message="Loading products..." />
       </div>
     }>
       <ProductsContent />

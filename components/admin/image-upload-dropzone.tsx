@@ -11,6 +11,7 @@ interface ImageUploadDropzoneProps {
   onChange: (url: string) => void;
   label?: string;
   placeholder?: string;
+  hint?: string;
 }
 
 export function ImageUploadDropzone({
@@ -18,6 +19,7 @@ export function ImageUploadDropzone({
   onChange,
   label = 'Product Image',
   placeholder = 'https://res.cloudinary.com/...',
+  hint,
 }: ImageUploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -101,6 +103,12 @@ export function ImageUploadDropzone({
           {showUrlInput ? 'Use File Upload' : 'Paste Image URL'}
         </button>
       </div>
+
+      {hint && (
+        <p className="text-[10px] font-medium text-primary/80 bg-primary/5 border border-primary/10 rounded-lg px-2 py-1 -mt-0.5">
+          {hint}
+        </p>
+      )}
 
       {showUrlInput ? (
         <Input

@@ -10,6 +10,7 @@ import { WishlistDrawer } from '@/components/store/wishlist-drawer';
 import Navbar from '@/components/layout/navbar';
 import Footer from '@/components/layout/footer';
 import ScrollToTop from '@/components/layout/scroll-to-top';
+import { SITE } from '@/lib/site';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +30,11 @@ export const metadata: Metadata = {
   },
   description:
     'Shop premium massage chairs, treadmills, spin bikes, home gyms and wellness equipment from Fit Forever India. Manufacturer-direct quality with nationwide service.',
+  icons: {
+    icon: SITE.logo,
+    shortcut: SITE.logo,
+    apple: SITE.logo,
+  },
   keywords: [
     'fitness equipment India',
     'massage chair',

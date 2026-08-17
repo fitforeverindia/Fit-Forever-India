@@ -24,6 +24,7 @@ import {
   RotateCcw,
   CloudUpload,
   Info,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -572,13 +573,30 @@ export default function AdminProductsPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {p.badge ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/20">
-                          {p.badge}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[10px]">—</span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {p.badge ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/20">
+                            {p.badge}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">—</span>
+                        )}
+                        <button
+                          onClick={() =>
+                            updateProduct(p.id, {
+                              badge: (p.badge || '').toLowerCase() === 'new' ? null : 'New',
+                            })
+                          }
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+                            (p.badge || '').toLowerCase() === 'new'
+                              ? 'border-sky-300 bg-sky-50 text-sky-600'
+                              : 'border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600'
+                          }`}
+                          title="Toggle New Arrival"
+                        >
+                          <Sparkles className={`h-3.5 w-3.5 ${(p.badge || '').toLowerCase() === 'new' ? 'fill-sky-400 text-sky-500' : ''}`} />
+                        </button>
+                      </div>
                     </td>
 
                     <td className="py-3 px-4">
@@ -793,7 +811,22 @@ export default function AdminProductsPage() {
                     />
                     Feature on Homepage
                   </label>
+
+                  <label className="flex items-center gap-2 text-xs text-slate-800 font-semibold cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={formData.badge.trim().toLowerCase() === 'new'}
+                      onChange={(e) =>
+                        setFormData({ ...formData, badge: e.target.checked ? 'New' : '' })
+                      }
+                      className="rounded border-slate-300 text-primary"
+                    />
+                    Show in New Arrivals
+                  </label>
                 </div>
+                <p className="text-[10px] text-slate-400 -mt-1">
+                  "Show in New Arrivals" sets the Badge Tag above to "New" — typing a different badge will unmark it.
+                </p>
               </TabsContent>
 
               {/* TAB 2: COLOR VARIANTS & CLOUDINARY MEDIA */}
@@ -1236,6 +1269,46 @@ export default function AdminProductsPage() {
                     }}
                   />
                 </div>
+
+                {/* Visual thumbnails of every image embedded in the description — no raw URLs */}
+                {(() => {
+                  const embeddedImages = Array.from(
+                    formData.description.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)
+                  ).map((m) => ({ full: m[0], url: m[1] }));
+
+                  if (embeddedImages.length === 0) return null;
+
+                  return (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase text-slate-700">
+                        Images In Description ({embeddedImages.length})
+                      </Label>
+                      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200/80 bg-slate-50 p-3">
+                        {embeddedImages.map((img, i) => (
+                          <div key={i} className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                            <img src={img.url} alt={`Slide ${i + 1}`} className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  description: prev.description
+                                    .split(img.full)
+                                    .join('')
+                                    .replace(/\n{3,}/g, '\n\n'),
+                                }))
+                              }
+                              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                              aria-label="Remove image from description"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {showMarkdownPreview ? (
                   <div className="min-h-[220px] rounded-2xl border border-slate-200 bg-white p-4 text-xs space-y-3 text-slate-800">

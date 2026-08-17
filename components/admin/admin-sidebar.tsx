@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ChevronRight,
   Store,
+  GalleryHorizontal,
 } from 'lucide-react';
 import { useAdminAuth } from '@/lib/admin-auth';
 import { SITE } from '@/lib/site';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Hero Banner', href: '/admin/hero', icon: GalleryHorizontal },
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Categories', href: '/admin/categories', icon: Layers },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },

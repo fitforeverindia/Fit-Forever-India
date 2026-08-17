@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/store/product-card';
 import { MarkdownLite } from '@/components/shared/markdown-lite';
+import { PageLoader } from '@/components/ui/page-loader';
 import { useStore } from '@/components/store/store-provider';
 import { useProductsStore } from '@/lib/products-store';
 import { formatINR, discountPercent } from '@/lib/format';
@@ -250,9 +251,8 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pt-32 pb-20 text-center dark:bg-slate-950">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#1E1E1E] border-t-transparent"></div>
-        <p className="mt-4 text-sm font-semibold text-slate-500">Loading product details...</p>
+      <div className="min-h-screen bg-white pt-32 pb-20 dark:bg-slate-950">
+        <PageLoader message="Loading product details..." />
       </div>
     );
   }

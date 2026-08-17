@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Category, Product, Customer, SavedAddress, Order, OrderItemDetail } from './types';
+import type { Category, Product, Customer, SavedAddress, Order, OrderItemDetail, HeroSlide } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ezudcnndhboepasvlvas.supabase.co';
 const supabaseKey =
@@ -378,6 +378,8 @@ export async function getSupabaseCategories(): Promise<Category[]> {
         slug: c.slug,
         description: c.description || '',
         image: c.image_url || '',
+        bannerImage: c.banner_url || '',
+        bannerImageMobile: c.banner_url_mobile || '',
       }));
     }
     return [];
@@ -394,6 +396,8 @@ export async function createSupabaseCategory(c: Category): Promise<Category[]> {
       slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       description: c.description || null,
       image_url: c.image || null,
+      banner_url: c.bannerImage || null,
+      banner_url_mobile: c.bannerImageMobile || null,
     };
     if (isValidUUID(c.id)) {
       row.id = c.id;
@@ -417,6 +421,8 @@ export async function updateSupabaseCategory(id: string, updated: Partial<Catego
     if (updated.slug !== undefined) patch.slug = updated.slug;
     if (updated.description !== undefined) patch.description = updated.description;
     if (updated.image !== undefined) patch.image_url = updated.image;
+    if (updated.bannerImage !== undefined) patch.banner_url = updated.bannerImage;
+    if (updated.bannerImageMobile !== undefined) patch.banner_url_mobile = updated.bannerImageMobile;
 
     if (isValidUUID(id)) {
       const { error } = await supabase.from('product_categories').update(patch).eq('id', id);
@@ -449,6 +455,97 @@ export async function deleteSupabaseCategory(id: string): Promise<Category[]> {
     console.error('Failed to delete category from Supabase:', err);
   }
   return getSupabaseCategories();
+}
+
+// === HERO SLIDES SUPABASE QUERIES ===
+function mapRowToHeroSlide(row: any): HeroSlide {
+  return {
+    id: row.id,
+    eyebrow: row.eyebrow || '',
+    title: row.title || '',
+    subtitle: row.subtitle || '',
+    imageDesktop: row.image_desktop || '',
+    imageMobile: row.image_mobile || '',
+    primaryLabel: row.primary_label || '',
+    primaryHref: row.primary_href || '',
+    secondaryLabel: row.secondary_label || '',
+    secondaryHref: row.secondary_href || '',
+    sortOrder: row.sort_order ?? 0,
+    isActive: row.is_active ?? true,
+  };
+}
+
+export async function getSupabaseHeroSlides(): Promise<HeroSlide[]> {
+  try {
+    const { data, error } = await supabase
+      .from('hero_slides')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (error) {
+      console.error('Supabase getSupabaseHeroSlides error:', error.message);
+      return [];
+    }
+    return Array.isArray(data) ? data.map(mapRowToHeroSlide) : [];
+  } catch (err) {
+    console.error('Error fetching Supabase hero slides:', err);
+    return [];
+  }
+}
+
+export async function createSupabaseHeroSlide(s: Partial<HeroSlide>): Promise<HeroSlide[]> {
+  try {
+    const row: any = {
+      eyebrow: s.eyebrow || null,
+      title: s.title || 'New Slide',
+      subtitle: s.subtitle || null,
+      image_desktop: s.imageDesktop || null,
+      image_mobile: s.imageMobile || null,
+      primary_label: s.primaryLabel || null,
+      primary_href: s.primaryHref || null,
+      secondary_label: s.secondaryLabel || null,
+      secondary_href: s.secondaryHref || null,
+      sort_order: s.sortOrder ?? 0,
+      is_active: s.isActive ?? true,
+    };
+    const { error } = await supabase.from('hero_slides').insert([row]);
+    if (error) console.error('Supabase createSupabaseHeroSlide error:', error.message);
+  } catch (err) {
+    console.error('Failed to create hero slide in Supabase:', err);
+  }
+  return getSupabaseHeroSlides();
+}
+
+export async function updateSupabaseHeroSlide(id: string, updated: Partial<HeroSlide>): Promise<HeroSlide[]> {
+  try {
+    const patch: any = {};
+    if (updated.eyebrow !== undefined) patch.eyebrow = updated.eyebrow;
+    if (updated.title !== undefined) patch.title = updated.title;
+    if (updated.subtitle !== undefined) patch.subtitle = updated.subtitle;
+    if (updated.imageDesktop !== undefined) patch.image_desktop = updated.imageDesktop;
+    if (updated.imageMobile !== undefined) patch.image_mobile = updated.imageMobile;
+    if (updated.primaryLabel !== undefined) patch.primary_label = updated.primaryLabel;
+    if (updated.primaryHref !== undefined) patch.primary_href = updated.primaryHref;
+    if (updated.secondaryLabel !== undefined) patch.secondary_label = updated.secondaryLabel;
+    if (updated.secondaryHref !== undefined) patch.secondary_href = updated.secondaryHref;
+    if (updated.sortOrder !== undefined) patch.sort_order = updated.sortOrder;
+    if (updated.isActive !== undefined) patch.is_active = updated.isActive;
+
+    const { error } = await supabase.from('hero_slides').update(patch).eq('id', id);
+    if (error) console.error('Supabase updateSupabaseHeroSlide error:', error.message);
+  } catch (err) {
+    console.error('Failed to update hero slide in Supabase:', err);
+  }
+  return getSupabaseHeroSlides();
+}
+
+export async function deleteSupabaseHeroSlide(id: string): Promise<HeroSlide[]> {
+  try {
+    const { error } = await supabase.from('hero_slides').delete().eq('id', id);
+    if (error) console.error('Supabase deleteSupabaseHeroSlide error:', error.message);
+  } catch (err) {
+    console.error('Failed to delete hero slide from Supabase:', err);
+  }
+  return getSupabaseHeroSlides();
 }
 
 // === CUSTOMERS SUPABASE QUERIES ===

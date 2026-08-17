@@ -77,12 +77,29 @@ export type Product = {
 };
 
 
+export type HeroSlide = {
+  id: string;
+  eyebrow?: string | null;
+  title: string;
+  subtitle?: string | null;
+  imageDesktop?: string | null;
+  imageMobile?: string | null;
+  primaryLabel?: string | null;
+  primaryHref?: string | null;
+  secondaryLabel?: string | null;
+  secondaryHref?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+};
+
 export type Category = {
   id: string;
   name: string;
   slug: string;
   description?: string | null;
   image: string;
+  bannerImage?: string | null;
+  bannerImageMobile?: string | null;
   productCount?: number;
 };
 

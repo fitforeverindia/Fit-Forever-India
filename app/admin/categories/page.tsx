@@ -24,6 +24,8 @@ const EMPTY_CATEGORY_FORM = {
   slug: '',
   description: '',
   image: '',
+  bannerImage: '',
+  bannerImageMobile: '',
 };
 
 export default function AdminCategoriesPage() {
@@ -52,6 +54,8 @@ export default function AdminCategoriesPage() {
       slug: cat.slug,
       description: cat.description ?? '',
       image: cat.image,
+      bannerImage: cat.bannerImage ?? '',
+      bannerImageMobile: cat.bannerImageMobile ?? '',
     });
     setIsModalOpen(true);
   };
@@ -82,6 +86,40 @@ export default function AdminCategoriesPage() {
       }
     }
 
+    let finalBanner = formData.bannerImage;
+    if (finalBanner && finalBanner.startsWith('data:image/')) {
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: finalBanner }),
+        });
+        const uploadData = await res.json();
+        if (uploadData.url) {
+          finalBanner = uploadData.url;
+        }
+      } catch (err) {
+        console.error('Error uploading category banner:', err);
+      }
+    }
+
+    let finalBannerMobile = formData.bannerImageMobile;
+    if (finalBannerMobile && finalBannerMobile.startsWith('data:image/')) {
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: finalBannerMobile }),
+        });
+        const uploadData = await res.json();
+        if (uploadData.url) {
+          finalBannerMobile = uploadData.url;
+        }
+      } catch (err) {
+        console.error('Error uploading category mobile banner:', err);
+      }
+    }
+
     const generatedSlug =
       formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -91,6 +129,8 @@ export default function AdminCategoriesPage() {
         slug: generatedSlug,
         description: formData.description,
         image: finalImage,
+        bannerImage: finalBanner,
+        bannerImageMobile: finalBannerMobile,
       });
       toast.success(`Category "${formData.name}" updated successfully!`, { id: toastId });
     } else {
@@ -100,6 +140,8 @@ export default function AdminCategoriesPage() {
         slug: generatedSlug,
         description: formData.description,
         image: finalImage,
+        bannerImage: finalBanner,
+        bannerImageMobile: finalBannerMobile,
       };
       await addCategory(newCat);
       toast.success(`Created new category "${formData.name}"!`, { id: toastId });
@@ -207,7 +249,7 @@ export default function AdminCategoriesPage() {
 
       {/* Add / Edit Category Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-md bg-white border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-bold text-slate-900">
               {editingCategory ? 'Edit Category' : 'Add New Category'}
@@ -244,6 +286,20 @@ export default function AdminCategoriesPage() {
               label="Category Thumbnail Image"
               value={formData.image}
               onChange={(url) => setFormData({ ...formData, image: url })}
+            />
+
+            <ImageUploadDropzone
+              label="Category Page Banner — Desktop"
+              hint="Recommended: professional, high-quality banner · 16:9 aspect ratio (e.g. 1920×1080px)"
+              value={formData.bannerImage}
+              onChange={(url) => setFormData({ ...formData, bannerImage: url })}
+            />
+
+            <ImageUploadDropzone
+              label="Category Page Banner — Mobile"
+              hint="Recommended: professional, high-quality banner · 4:5 aspect ratio (e.g. 1080×1350px)"
+              value={formData.bannerImageMobile}
+              onChange={(url) => setFormData({ ...formData, bannerImageMobile: url })}
             />
 
             <div className="space-y-1.5">

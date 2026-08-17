@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Layers } from 'lucide-react';
 import { useCategoriesStore } from '@/lib/categories-store';
@@ -11,105 +10,51 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
   const rawCategories = initialCategories && initialCategories.length > 0 ? initialCategories : dynamicCategories;
   const categories = Array.isArray(rawCategories) ? rawCategories : [];
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Avoid unnecessary duplication when categories list is small
-  const displayCategories = categories.length > 3
-    ? [...categories, ...categories, ...categories]
-    : categories;
-
-  // Auto-scroll effect optimized for 60-120fps GPU performance
-  useEffect(() => {
-    if (displayCategories.length <= 4) return;
-
-    let animationFrameId: number;
-    let lastTime = performance.now();
-
-    const animate = (currentTime: number) => {
-      const deltaTime = currentTime - lastTime;
-      lastTime = currentTime;
-
-      if (scrollRef.current && !isPaused) {
-        scrollRef.current.scrollLeft += deltaTime * 0.035;
-
-        const halfWidth = scrollRef.current.scrollWidth / 2;
-        if (scrollRef.current.scrollLeft >= halfWidth) {
-          scrollRef.current.scrollLeft -= halfWidth;
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isPaused, displayCategories.length]);
-
   if (categories.length === 0) {
     return null;
   }
 
   return (
-    <section className="bg-[#F4F5F7] py-8 sm:py-12 dark:bg-muted/30 overflow-hidden">
+    <section className="bg-white py-8 sm:py-12 dark:bg-background">
       <div className="container-fit">
         {/* Header - Left Aligned Title */}
-        <div className="flex flex-row items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
-              EXPLORE OUR RANGE
-            </span>
-            <h2 className="mt-1 font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-foreground sm:text-3xl lg:text-4xl">
-              CATEGORIES
-            </h2>
-          </div>
+        <div>
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
+            Discover Your Favorites
+          </span>
+          <h2 className="mt-1 font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-foreground sm:text-3xl lg:text-4xl">
+            Explore by Category
+          </h2>
         </div>
 
-        {/* Carousel Container */}
-        <div
-          className="relative mt-8 sm:mt-10 w-full overflow-hidden"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          onTouchStart={() => setIsPaused(true)}
-          onTouchEnd={() => setIsPaused(false)}
-        >
-          {/* Scrollable Container (scroll-smooth removed to prevent auto-scrolling stutter) */}
-          <div
-            ref={scrollRef}
-            className={`flex gap-6 sm:gap-8 lg:gap-10 overflow-x-auto scrollbar-none py-2 touch-pan-x overscroll-x-contain ${
-              categories.length <= 4 ? 'justify-start sm:justify-center' : ''
-            }`}
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
-          >
-            {displayCategories.map((cat, idx) => (
-              <Link
-                key={`${cat.slug || cat.id}-${idx}`}
-                href={`/products?category=${cat.slug}`}
-                className="group flex flex-col items-center shrink-0 w-28 sm:w-36 lg:w-40 text-center cursor-pointer select-none"
-              >
-                {/* Circular Avatar Frame - Full Edge Cover */}
-                <div className="relative aspect-square w-full rounded-full bg-white shadow-sm border border-slate-200 p-1 transition-all duration-300 group-hover:scale-105 group-hover:shadow-md group-hover:border-primary dark:bg-card dark:border-border overflow-hidden">
-                  {cat.image ? (
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      loading="lazy"
-                      className="h-full w-full rounded-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="h-full w-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                      <Layers className="h-8 w-8" />
-                    </div>
-                  )}
+        {/* Uniform Grid */}
+        <div className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug || cat.id}
+              href={`/products?category=${cat.slug}`}
+              className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 p-2.5 shadow-sm transition-all duration-300 active:scale-95 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.2)] dark:bg-muted dark:border-border sm:p-3.5"
+            >
+              {cat.image ? (
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  loading="lazy"
+                  className="h-full w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-xl text-slate-400">
+                  <Layers className="h-10 w-10" />
                 </div>
+              )}
 
-                {/* Category Name */}
-                <span className="mt-3 font-display font-bold text-xs sm:text-sm text-foreground tracking-wide group-hover:text-primary transition-colors line-clamp-1">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
+              {/* Name badge */}
+              <span className="absolute left-2 top-2 sm:left-3 sm:top-3 inline-flex items-center justify-start gap-1.5 whitespace-nowrap rounded-full border border-white/70 bg-white/90 px-3 py-1.5 text-left text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition-transform duration-300 group-hover:scale-105 dark:bg-card/90 dark:border-border dark:text-foreground">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                {cat.name}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

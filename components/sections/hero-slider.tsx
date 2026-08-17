@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useHeroSlidesStore } from '@/lib/hero-slides-store';
 
-const SLIDES = [
+const DEFAULT_SLIDES = [
   {
-    image:
-      'https://images.pexels.com/photos/35215412/pexels-photo-35215412.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    imageMobile:
-      'https://images.pexels.com/photos/35215412/pexels-photo-35215412.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: '/HeroBanner/slide1pc.png',
+    imageMobile: '/HeroBanner/slide1mobile.png',
     eyebrow: 'Premium Fitness Equipment',
     title: 'Train. Recover. Live Better.',
     subtitle:
@@ -20,10 +19,8 @@ const SLIDES = [
     secondary: { label: 'Explore Products', href: '/products' },
   },
   {
-    image:
-      'https://res.cloudinary.com/ufptbplr/image/upload/v1786000626/massagechairhero_nkpobu.jpg',
-    imageMobile:
-      'https://res.cloudinary.com/ufptbplr/image/upload/v1786000626/massagechairhero_nkpobu.jpg',
+    image: '/HeroBanner/slide2pc.png',
+    imageMobile: '/HeroBanner/slide2mobile.png',
     eyebrow: 'Spa-Grade Recovery',
     title: 'Massage Chairs That Restore',
     subtitle:
@@ -35,10 +32,8 @@ const SLIDES = [
     secondary: { label: 'Explore Products', href: '/products' },
   },
   {
-    image:
-      'https://images.pexels.com/photos/7174396/pexels-photo-7174396.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    imageMobile:
-      'https://images.pexels.com/photos/7174396/pexels-photo-7174396.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: '/HeroBanner/slide3pc.png',
+    imageMobile: '/HeroBanner/slide3mobile.png',
     eyebrow: 'Build Your Home Gym',
     title: 'Performance At Home',
     subtitle: 'Treadmills, spin bikes and strength systems built to last.',
@@ -48,17 +43,39 @@ const SLIDES = [
 ];
 
 export default function HeroSlider() {
+  const { slides: dbSlides, loaded } = useHeroSlidesStore();
+
+  const activeDbSlides = dbSlides
+    .filter((s) => s.isActive !== false && (s.imageDesktop || s.imageMobile))
+    .map((s) => ({
+      image: s.imageDesktop || s.imageMobile || '',
+      imageMobile: s.imageMobile || s.imageDesktop || '',
+      eyebrow: s.eyebrow || '',
+      title: s.title,
+      subtitle: s.subtitle || '',
+      primary: { label: s.primaryLabel || 'Shop Now', href: s.primaryHref || '/products' },
+      secondary: { label: s.secondaryLabel || 'Explore Products', href: s.secondaryHref || '/products' },
+    }));
+
+  // Use admin-managed slides once loaded; fall back to the built-in defaults
+  // only if the admin hasn't configured any slides yet.
+  const SLIDES = loaded && activeDbSlides.length > 0 ? activeDbSlides : DEFAULT_SLIDES;
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
+  useEffect(() => {
+    if (index >= SLIDES.length) setIndex(0);
+  }, [SLIDES.length, index]);
+
   const next = useCallback(
     () => setIndex((i) => (i + 1) % SLIDES.length),
-    []
+    [SLIDES.length]
   );
   const prev = useCallback(
     () => setIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length),
-    []
+    [SLIDES.length]
   );
 
   useEffect(() => {
@@ -89,9 +106,9 @@ export default function HeroSlider() {
     <section
       className="
         relative w-full overflow-hidden bg-slate-950 select-none
-        h-[100svh] min-h-[560px] max-h-[1080px]
-        sm:h-[92vh] sm:min-h-[600px]
-        lg:h-screen lg:max-h-none
+        aspect-[4/5]
+        sm:aspect-auto sm:h-[calc(100vh-4rem)] sm:min-h-[600px]
+        lg:h-[calc(100vh-5rem)] lg:max-h-none
       "
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -102,37 +119,46 @@ export default function HeroSlider() {
       {SLIDES.map((slide, i) => (
         <div
           key={i}
-          className="absolute inset-0 transition-opacity duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="absolute inset-0 overflow-hidden transition-opacity duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
           style={{
             opacity: i === index ? 1 : 0,
             zIndex: i === index ? 1 : 0,
           }}
         >
-          <picture>
-            <source media="(min-width: 640px)" srcSet={slide.image} />
-            <img
-              src={slide.imageMobile || slide.image}
-              alt={slide.title}
-              className="h-full w-full object-cover object-[65%_center] sm:object-center"
-              loading={i === 0 ? 'eager' : 'lazy'}
-              fetchPriority={i === 0 ? 'high' : 'auto'}
-            />
-          </picture>
+          <motion.div
+            className="h-full w-full"
+            animate={{ scale: i === index ? 1.08 : 1 }}
+            transition={{ duration: 6.5, ease: 'linear' }}
+          >
+            <picture>
+              <source media="(min-width: 640px)" srcSet={slide.image} />
+              <img
+                src={slide.imageMobile || slide.image}
+                alt={slide.title}
+                className="h-full w-full object-cover object-[65%_center] sm:object-center"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+              />
+            </picture>
+          </motion.div>
 
           {/* Dual overlay gradient for readability on all devices */}
           <div
             className="
               absolute inset-0
-              bg-gradient-to-t from-black/90 via-black/55 to-black/40
-              sm:bg-gradient-to-r sm:from-black/90 sm:via-black/55 sm:to-black/20
-              lg:from-black/85 lg:via-black/40 lg:to-transparent
+              bg-gradient-to-t from-black/70 via-black/35 to-black/15
+              sm:bg-gradient-to-r sm:from-black/75 sm:via-black/40 sm:to-black/15
+              lg:from-black/70 lg:via-black/30 lg:to-transparent
             "
           />
+
+          {/* Bottom vignette for extra depth */}
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
       ))}
 
       {/* Hero content */}
-      <div className="relative z-10 flex h-full items-center pt-24 pb-20 sm:py-0">
+      <div className="relative z-10 flex h-full items-center pt-8 pb-20 sm:py-0">
         <div className="container-fit w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -145,11 +171,16 @@ export default function HeroSlider() {
             >
               <span
                 className="
-                  inline-block rounded-full border border-white/20 bg-white/15
+                  inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15
                   px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]
-                  text-white backdrop-blur
+                  text-white backdrop-blur-md shadow-[0_2px_20px_rgba(0,0,0,0.25)]
                 "
+                style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}
               >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+                </span>
                 {SLIDES[index].eyebrow}
               </span>
 
@@ -161,15 +192,19 @@ export default function HeroSlider() {
                   lg:text-6xl
                   xl:text-7xl
                 "
+                style={{ textShadow: '0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.8)' }}
               >
                 {SLIDES[index].title}
               </h1>
+
+              <span className="mt-4 block h-1 w-16 rounded-full bg-gradient-to-r from-primary to-primary/0" />
 
               <p
                 className="
                   mt-3 sm:mt-5 max-w-xl text-white/90 leading-relaxed
                   text-sm sm:text-base lg:text-lg xl:text-xl
                 "
+                style={{ textShadow: '0 1px 8px rgba(0,0,0,0.65)' }}
               >
                 {SLIDES[index].subtitle}
               </p>
@@ -179,17 +214,17 @@ export default function HeroSlider() {
                 <Button
                   asChild
                   className="
-                    rounded-full bg-primary text-white shadow-lg shadow-primary/25
-                    hover:bg-primary/90
+                    group rounded-full bg-primary text-white shadow-[0_8px_30px_-6px_rgba(0,0,0,0.5)] shadow-primary/40
+                    hover:bg-primary/90 hover:shadow-primary/60 hover:-translate-y-0.5
                     px-5 py-2.5 text-sm
                     sm:px-7 sm:py-6 sm:text-base
                     lg:px-8 lg:text-base
-                    font-bold
+                    font-bold transition-all duration-300
                   "
                 >
                   <Link href={SLIDES[index].primary.href}>
                     {SLIDES[index].primary.label}
-                    <ArrowRight className="ml-1.5 h-4 w-4 sm:h-5 sm:w-5" />
+                    <ArrowRight className="ml-1.5 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 sm:h-5 sm:w-5" />
                   </Link>
                 </Button>
 
@@ -198,11 +233,11 @@ export default function HeroSlider() {
                   variant="outline"
                   className="
                     rounded-full border-white/40 bg-white/10 text-white backdrop-blur
-                    hover:bg-white hover:text-slate-900
+                    hover:bg-white hover:text-slate-900 hover:-translate-y-0.5
                     px-5 py-2.5 text-sm
                     sm:px-7 sm:py-6 sm:text-base
                     lg:px-8 lg:text-base
-                    font-bold
+                    font-bold transition-all duration-300
                   "
                 >
                   <Link href={SLIDES[index].secondary.href}>
@@ -241,8 +276,8 @@ export default function HeroSlider() {
               key={i}
               onClick={() => setIndex(i)}
               aria-label={`Go to slide ${i + 1}`}
-              className={`h-1.5 sm:h-2 rounded-full transition-all ${i === index
-                ? 'w-6 sm:w-8 lg:w-10 bg-primary'
+              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${i === index
+                ? 'w-6 sm:w-8 lg:w-10 bg-primary shadow-[0_0_12px_rgba(0,0,0,0.4)] shadow-primary/70'
                 : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/70'
                 }`}
             />

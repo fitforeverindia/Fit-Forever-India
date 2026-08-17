@@ -1,6 +1,7 @@
 import HeroSlider from '@/components/sections/hero-slider';
 import { CategoryGrid } from '@/components/sections/category-grid';
 import { FeaturedProducts } from '@/components/sections/featured-products';
+import { NewArrivals } from '@/components/sections/new-arrivals';
 import { WhyChoose } from '@/components/sections/why-choose';
 import { StatsSection } from '@/components/sections/stats-section';
 import { Testimonials } from '@/components/sections/testimonials';
@@ -13,9 +14,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Home() {
-  const [categories, products] = await Promise.all([
+  const [categories, products, newArrivals] = await Promise.all([
     getCategories(),
     getProducts({ featured: true, limit: 8 }),
+    getProducts({}),
   ]);
 
   return (
@@ -23,6 +25,7 @@ export default async function Home() {
       <HeroSlider />
       <CategoryGrid categories={categories} />
       <FeaturedProducts products={products} />
+      <NewArrivals products={newArrivals} />
       <WhyChoose />
       <StatsSection />
       <CtaBanner />
