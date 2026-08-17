@@ -23,6 +23,7 @@ import {
   Award,
   Layers,
   Box,
+  ImageOff,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -37,6 +38,57 @@ import { formatINR, discountPercent } from '@/lib/format';
 import { SITE } from '@/lib/site';
 import { cn } from '@/lib/utils';
 import type { Product, ColorVariant } from '@/lib/types';
+
+const MAX_IMAGE_RETRIES = 3;
+
+// Product images are hotlinked from third-party manufacturer sites (not our own CDN), so on a
+// flaky mobile connection a handful of them intermittently fail to load — most visibly in the
+// thumbnail rail, where several requests fire at once. A plain <img> never retries a failed
+// load on its own, so we do it manually with a short backoff before giving up on that image.
+function RetryImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [attempt, setAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setAttempt(0);
+    setFailed(false);
+  }, [src]);
+
+  if (failed) {
+    return (
+      <div className={cn('flex items-center justify-center bg-slate-50 dark:bg-slate-800', className)}>
+        <ImageOff className="h-1/3 w-1/3 text-slate-300 dark:text-slate-600" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      key={attempt}
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      loading="lazy"
+      decoding="async"
+      className={className}
+      onError={() => {
+        if (attempt < MAX_IMAGE_RETRIES) {
+          setTimeout(() => setAttempt((a) => a + 1), 600 * (attempt + 1));
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
+}
 
 // Thumbnail rail with arrow-based paging instead of a raw scrollbar: an edge arrow
 // appears only when there's more to see in that direction, and scrolls one "page" at a time.
@@ -117,10 +169,9 @@ function ThumbnailNav({
                 : 'border-slate-200 opacity-70 hover:opacity-100 dark:border-slate-800'
             )}
           >
-            <img
+            <RetryImage
               src={imgUrl}
               alt={`${productName} thumbnail ${index + 1}`}
-              referrerPolicy="no-referrer"
               className="h-full w-full object-contain rounded-lg"
             />
           </button>
@@ -301,8 +352,8 @@ export default function ProductDetailPage() {
       : products.filter((p) => p.id !== product.id).slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-white pt-24 pb-20 dark:bg-slate-950">
-      <div className="container-fit">
+    <div className="min-h-screen bg-white pb-20 dark:bg-slate-950">
+      <div className="container-fit pt-8">
         {/* Top Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium sm:text-sm">
           <Link href="/" className="hover:text-[#C81E4E] transition-colors">
@@ -338,10 +389,9 @@ export default function ProductDetailPage() {
 
             {/* Main Product Image Container */}
             <div className="relative flex-1 aspect-square sm:aspect-[4/5] sm:max-h-[520px] overflow-hidden rounded-[32px] border border-slate-200/80 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center justify-center p-6 sm:p-8">
-              <img
+              <RetryImage
                 src={selectedImage}
                 alt={product.name}
-                referrerPolicy="no-referrer"
                 className="h-full w-full object-contain transition-all duration-500 hover:scale-105"
               />
 
@@ -515,7 +565,7 @@ export default function ProductDetailPage() {
                 {/* Add To Cart Button */}
                 <button
                   onClick={handleAddToCart}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1E1E1E] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-black active:scale-95 dark:bg-slate-800 dark:hover:bg-slate-700"
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[#1E1E1E] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-black active:scale-95 dark:bg-slate-800 dark:hover:bg-slate-700"
                 >
                   <ShoppingBag className="h-4 w-4 text-white" />
                   Add To Cart

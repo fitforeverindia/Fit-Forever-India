@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import HeroSlider from '@/components/sections/hero-slider';
 import { CategoryGrid } from '@/components/sections/category-grid';
 import { FeaturedProducts } from '@/components/sections/featured-products';
@@ -13,19 +14,29 @@ import { getCategories, getProducts } from '@/lib/queries';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function Home() {
+async function CatalogSections() {
   const [categories, products, newArrivals] = await Promise.all([
     getCategories(),
     getProducts({ featured: true, limit: 8 }),
-    getProducts({}),
+    getProducts({ limit: 40 }),
   ]);
 
   return (
     <>
-      <HeroSlider />
       <CategoryGrid categories={categories} />
       <FeaturedProducts products={products} />
       <NewArrivals products={newArrivals} />
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <HeroSlider />
+      <Suspense fallback={null}>
+        <CatalogSections />
+      </Suspense>
       <WhyChoose />
       <StatsSection />
       <CtaBanner />
