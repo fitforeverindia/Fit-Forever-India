@@ -121,8 +121,8 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Bottom Bar: Price & Add To Cart Button */}
-          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 pt-1">
-            <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+          <div className="mt-3 sm:mt-4 flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-2">
+            <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
               <span className="font-sans text-sm sm:text-lg font-extrabold text-slate-900 dark:text-foreground">
                 {formatINR(product.price)}
               </span>

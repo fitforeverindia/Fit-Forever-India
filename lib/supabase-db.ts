@@ -291,9 +291,13 @@ export async function updateSupabaseProduct(id: string, updated: Partial<Product
     if (updated.price !== undefined) patch.price = Number(updated.price);
     if (updated.compareAtPrice !== undefined) patch.compare_at_price = updated.compareAtPrice ? Number(updated.compareAtPrice) : null;
     if (updated.image !== undefined) patch.image_url = updated.image;
+    if (updated.gallery !== undefined) patch.gallery_urls = updated.gallery;
     if (updated.badge !== undefined) patch.badge = updated.badge;
     if (updated.featured !== undefined) patch.is_featured = updated.featured;
     if (updated.inStock !== undefined) patch.is_active = updated.inStock;
+    if ((updated as any).descriptionHtml !== undefined) patch.description_html = (updated as any).descriptionHtml;
+    if ((updated as any).specificationHtml !== undefined) patch.specification_html = (updated as any).specificationHtml;
+    if ((updated as any).warrantyHtml !== undefined) patch.warranty_html = (updated as any).warrantyHtml;
     Object.assign(patch, mapProductSpecFields(updated));
 
     if (updated.categorySlug) {
