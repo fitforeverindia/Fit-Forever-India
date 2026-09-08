@@ -396,6 +396,7 @@ export default function AdminProductsPage() {
 
       certifications: formData.certifications,
       warranty: formData.warranty,
+      descriptionHtml: null,
       specifications: [
         { label: 'Model', value: formData.model || 'AM-333' },
         { label: 'Voltage', value: formData.ratedVoltage },

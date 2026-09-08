@@ -120,31 +120,34 @@ export default function AdminCategoriesPage() {
       }
     }
 
-    const generatedSlug =
-      formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const trimmedName = formData.name.trim();
+    const rawSlug = formData.slug ? formData.slug.trim() : '';
+    const generatedSlug = (
+      rawSlug || trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    ).toLowerCase();
 
     if (editingCategory) {
       await updateCategory(editingCategory.id, {
-        name: formData.name,
+        name: trimmedName,
         slug: generatedSlug,
-        description: formData.description,
-        image: finalImage,
-        bannerImage: finalBanner,
-        bannerImageMobile: finalBannerMobile,
+        description: (formData.description || '').trim(),
+        image: finalImage ? finalImage.trim() : '',
+        bannerImage: finalBanner ? finalBanner.trim() : '',
+        bannerImageMobile: finalBannerMobile ? finalBannerMobile.trim() : '',
       });
-      toast.success(`Category "${formData.name}" updated successfully!`, { id: toastId });
+      toast.success(`Category "${trimmedName}" updated successfully!`, { id: toastId });
     } else {
       const newCat: Category = {
         id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cat-${Date.now()}`,
-        name: formData.name,
+        name: trimmedName,
         slug: generatedSlug,
-        description: formData.description,
-        image: finalImage,
-        bannerImage: finalBanner,
-        bannerImageMobile: finalBannerMobile,
+        description: (formData.description || '').trim(),
+        image: finalImage ? finalImage.trim() : '',
+        bannerImage: finalBanner ? finalBanner.trim() : '',
+        bannerImageMobile: finalBannerMobile ? finalBannerMobile.trim() : '',
       };
       await addCategory(newCat);
-      toast.success(`Created new category "${formData.name}"!`, { id: toastId });
+      toast.success(`Created new category "${trimmedName}"!`, { id: toastId });
     }
 
     setIsModalOpen(false);

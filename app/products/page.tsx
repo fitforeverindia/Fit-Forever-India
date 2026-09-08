@@ -35,10 +35,25 @@ function ProductsContent() {
     setSelectedCategory(initialCategory || 'all');
   }, [initialCategory]);
 
-  const activeCategory = useMemo(
-    () => categories.find((c) => c.slug === selectedCategory) || null,
-    [categories, selectedCategory]
-  );
+  const activeCategory = useMemo(() => {
+    if (!selectedCategory || selectedCategory === 'all') return null;
+
+    // 1. Direct trimmed match
+    const direct = categories.find(
+      (c) => (c.slug || '').trim().toLowerCase() === selectedCategory.trim().toLowerCase()
+    );
+    if (direct) return direct;
+
+    // 2. Normalized alphanumeric match (supports 'massageaccessories' vs 'massage-accessories')
+    const targetClean = selectedCategory.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return (
+      categories.find((c) => {
+        const cSlugClean = (c.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cNameClean = (c.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return cSlugClean === targetClean || cNameClean === targetClean;
+      }) || null
+    );
+  }, [categories, selectedCategory]);
 
   // Reset page to 1 when filters change and sync URL
   const handleCategoryChange = (slug: string) => {
@@ -118,24 +133,17 @@ function ProductsContent() {
   return (
     <div className="min-h-screen bg-white pb-16 dark:bg-slate-950">
       {/* Category Banner */}
-      {activeCategory && activeCategory.bannerImage ? (
-        <div className="relative flex aspect-[8/7] w-full items-center justify-center overflow-hidden bg-slate-100 sm:aspect-[5/2] dark:bg-slate-900">
-          {/* Blurred fill so there are no empty letterbox bars if the viewport ratio differs slightly */}
-          <picture>
-            <source media="(min-width: 640px)" srcSet={activeCategory.bannerImage} />
+      {activeCategory && (activeCategory.bannerImage || activeCategory.bannerImageMobile) ? (
+        <div className="relative w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+          <picture className="w-full">
+            {activeCategory.bannerImage ? (
+              <source media="(min-width: 640px)" srcSet={activeCategory.bannerImage} />
+            ) : null}
             <img
-              src={activeCategory.bannerImageMobile || activeCategory.bannerImage}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl"
-            />
-          </picture>
-          <picture>
-            <source media="(min-width: 640px)" srcSet={activeCategory.bannerImage} />
-            <img
-              src={activeCategory.bannerImageMobile || activeCategory.bannerImage}
-              alt={activeCategory.name}
-              className="relative h-full w-full object-contain"
+              src={(activeCategory.bannerImageMobile || activeCategory.bannerImage) ?? ''}
+              alt={activeCategory.name || 'Category Banner'}
+              className="block w-full h-auto object-cover sm:object-contain mx-auto"
+              loading="eager"
             />
           </picture>
         </div>
