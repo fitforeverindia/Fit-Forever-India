@@ -15,8 +15,11 @@ import type { Product } from '@/lib/types';
 export function ProductCard({ product }: { product: Product }) {
   const { addToCart, toggleWishlist, isInWishlist } = useStore();
   const [quickView, setQuickView] = useState(false);
+  const [imgSrc, setImgSrc] = useState(product.image);
   const wished = isInWishlist(product.id);
   const discount = discountPercent(product.price, product.compareAtPrice);
+
+  const fallbackImage = 'https://res.cloudinary.com/ufptbplr/image/upload/v1785999890/Jogpad_c64iun.jpg';
 
   return (
     <>
@@ -29,10 +32,15 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="relative aspect-square w-full overflow-hidden rounded-xl sm:rounded-[24px] bg-white border border-slate-100 p-2 dark:bg-slate-900 dark:border-slate-800">
           <Link href={`/products/${product.slug}`} className="block h-full w-full">
             <img
-              src={product.image}
+              src={imgSrc || fallbackImage}
               alt={product.name}
               loading="lazy"
               referrerPolicy="no-referrer"
+              onError={() => {
+                if (imgSrc !== fallbackImage) {
+                  setImgSrc(fallbackImage);
+                }
+              }}
               className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
           </Link>
@@ -159,7 +167,7 @@ export function ProductCard({ product }: { product: Product }) {
             </button>
             <div className="flex gap-4">
               <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-secondary">
-                <img src={product.image} alt={product.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                <img src={imgSrc || fallbackImage} alt={product.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               </div>
               <div>
                 <h3 className="font-display font-bold text-lg text-slate-900">{product.name}</h3>

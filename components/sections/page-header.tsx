@@ -1,5 +1,4 @@
-'use client';
-
+import React from 'react';
 import { Reveal } from '@/components/ui/reveal';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
@@ -31,18 +30,20 @@ export function PageHeader({
             <Breadcrumb className="mb-4">
               <BreadcrumbList>
                 {breadcrumb.map((item, i) => (
-                  <BreadcrumbItem key={i}>
-                    {i > 0 && <BreadcrumbSeparator />}
-                    {item.href ? (
-                      <BreadcrumbLink asChild>
-                        <Link href={item.href} className="text-white/60 hover:text-white">
-                          {item.label}
-                        </Link>
-                      </BreadcrumbLink>
-                    ) : (
-                      <BreadcrumbPage className="text-white">{item.label}</BreadcrumbPage>
-                    )}
-                  </BreadcrumbItem>
+                  <React.Fragment key={i}>
+                    {i > 0 && <BreadcrumbSeparator className="text-white/40" />}
+                    <BreadcrumbItem>
+                      {item.href ? (
+                        <BreadcrumbLink asChild>
+                          <Link href={item.href} className="text-white/60 hover:text-white transition-colors">
+                            {item.label}
+                          </Link>
+                        </BreadcrumbLink>
+                      ) : (
+                        <BreadcrumbPage className="text-white font-medium">{item.label}</BreadcrumbPage>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
                 ))}
               </BreadcrumbList>
             </Breadcrumb>

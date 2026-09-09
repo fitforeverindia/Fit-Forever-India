@@ -119,10 +119,12 @@ export default function HeroSlider() {
       {SLIDES.map((slide, i) => (
         <div
           key={i}
-          className="absolute inset-0 overflow-hidden transition-opacity duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="absolute inset-0 overflow-hidden transition-opacity"
           style={{
             opacity: i === index ? 1 : 0,
             zIndex: i === index ? 1 : 0,
+            transitionDuration: '1200ms',
+            transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
           <motion.div
