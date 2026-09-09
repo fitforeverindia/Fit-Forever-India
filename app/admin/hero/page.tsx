@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GalleryHorizontal, Plus, Edit2, Trash2, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { GalleryHorizontal, Plus, Edit2, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +25,9 @@ const EMPTY_SLIDE_FORM = {
   subtitle: '',
   imageDesktop: '',
   imageMobile: '',
-  primaryLabel: 'Shop Now',
+  primaryLabel: '',
   primaryHref: '/products',
-  secondaryLabel: 'Explore Products',
+  secondaryLabel: '',
   secondaryHref: '/products',
   isActive: true,
 };
@@ -53,13 +53,13 @@ export default function AdminHeroPage() {
     setEditingSlide(slide);
     setFormData({
       eyebrow: slide.eyebrow ?? '',
-      title: slide.title,
+      title: slide.title ?? '',
       subtitle: slide.subtitle ?? '',
       imageDesktop: slide.imageDesktop ?? '',
       imageMobile: slide.imageMobile ?? '',
-      primaryLabel: slide.primaryLabel ?? 'Shop Now',
+      primaryLabel: slide.primaryLabel ?? '',
       primaryHref: slide.primaryHref ?? '/products',
-      secondaryLabel: slide.secondaryLabel ?? 'Explore Products',
+      secondaryLabel: slide.secondaryLabel ?? '',
       secondaryHref: slide.secondaryHref ?? '/products',
       isActive: slide.isActive ?? true,
     });
@@ -68,12 +68,9 @@ export default function AdminHeroPage() {
 
   const handleSaveSlide = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title) {
-      toast.error('Please enter a slide title');
-      return;
-    }
-    if (!formData.imageDesktop) {
-      toast.error('Please upload a laptop/desktop (16:9) banner image');
+
+    if (!formData.imageDesktop && !formData.imageMobile) {
+      toast.error('Please upload at least a laptop/desktop or mobile banner image');
       return;
     }
 
@@ -97,8 +94,9 @@ export default function AdminHeroPage() {
     }
   };
 
-  const handleDeleteSlide = async (id: string, title: string) => {
-    if (confirm(`Delete hero slide "${title}"?`)) {
+  const handleDeleteSlide = async (id: string, title?: string | null) => {
+    const displayTitle = title || 'Untitled Slide';
+    if (confirm(`Delete hero slide "${displayTitle}"?`)) {
       await deleteSlide(id);
       toast.success('Hero slide deleted');
     }
@@ -123,7 +121,7 @@ export default function AdminHeroPage() {
             Hero Banner ({sortedSlides.length})
           </h2>
           <p className="text-xs text-slate-500">
-            Manage the homepage hero slider — laptop (16:9) & mobile (4:5) banners, headline text, and buttons.
+            Manage homepage hero slider — laptop (16:9) & mobile (4:5) banner images, text overlay, and buttons.
           </p>
         </div>
 
@@ -141,90 +139,100 @@ export default function AdminHeroPage() {
           <GalleryHorizontal className="h-10 w-10 text-slate-300" />
           <h3 className="mt-4 font-display text-lg font-bold text-slate-900">No hero slides yet</h3>
           <p className="mt-1 text-xs text-slate-500 max-w-sm">
-            The homepage is currently showing the built-in default slides. Add a slide here to take over the homepage hero.
+            The homepage is currently showing the default slides. Add custom banner slides here to take over the hero slider.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {sortedSlides.map((slide, i) => (
-            <div
-              key={slide.id}
-              className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:border-slate-300"
-            >
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
-                {slide.imageDesktop ? (
-                  <img src={slide.imageDesktop} alt={slide.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-slate-400">
-                    <GalleryHorizontal className="h-10 w-10" />
-                  </div>
-                )}
-                {!slide.isActive && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <span className="rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                      Hidden
+          {sortedSlides.map((slide, i) => {
+            const isImageOnly = !slide.title?.trim() && !slide.eyebrow?.trim() && !slide.subtitle?.trim() && !slide.primaryLabel?.trim();
+            const displayTitle = slide.title?.trim() || (isImageOnly ? '(Image-only banner slide)' : 'Untitled Slide');
+
+            return (
+              <div
+                key={slide.id}
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:border-slate-300"
+              >
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                  {slide.imageDesktop || slide.imageMobile ? (
+                    <img src={slide.imageDesktop || slide.imageMobile || ''} alt={displayTitle} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-400">
+                      <GalleryHorizontal className="h-10 w-10" />
+                    </div>
+                  )}
+                  {!slide.isActive && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                        Hidden
+                      </span>
+                    </div>
+                  )}
+                  <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+                    Slide {i + 1}
+                  </span>
+                  {isImageOnly && (
+                    <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs">
+                      Clean Image Banner
                     </span>
-                  </div>
-                )}
-                <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
-                  Slide {i + 1}
-                </span>
-              </div>
-
-              <div className="flex flex-1 flex-col justify-between p-5">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{slide.eyebrow || '—'}</p>
-                  <h3 className="mt-1 font-display font-bold text-slate-900 text-lg leading-tight">{slide.title}</h3>
-                  <p className="mt-1 text-xs text-slate-500 line-clamp-2">{slide.subtitle}</p>
+                  )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => handleMove(slide, 'up')}
-                      disabled={i === 0}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
-                      title="Move up"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleMove(slide, 'down')}
-                      disabled={i === sortedSlides.length - 1}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
-                      title="Move down"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => updateSlide(slide.id, { isActive: !slide.isActive })}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-amber-400 hover:text-amber-600"
-                      title={slide.isActive ? 'Hide slide' : 'Show slide'}
-                    >
-                      {slide.isActive ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                    </button>
+                <div className="flex flex-1 flex-col justify-between p-5">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{slide.eyebrow || '—'}</p>
+                    <h3 className="mt-1 font-display font-bold text-slate-900 text-lg leading-tight">{displayTitle}</h3>
+                    <p className="mt-1 text-xs text-slate-500 line-clamp-2">{slide.subtitle || (isImageOnly ? 'Clean banner — overlay text is disabled' : 'No description')}</p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleOpenEdit(slide)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:border-primary hover:text-primary"
-                      title="Edit Slide"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSlide(slide.id, slide.title)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400 transition-colors hover:border-red-500 hover:text-red-600"
-                      title="Delete Slide"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleMove(slide, 'up')}
+                        disabled={i === 0}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
+                        title="Move up"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleMove(slide, 'down')}
+                        disabled={i === sortedSlides.length - 1}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
+                        title="Move down"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => updateSlide(slide.id, { isActive: !slide.isActive })}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-amber-400 hover:text-amber-600"
+                        title={slide.isActive ? 'Hide slide' : 'Show slide'}
+                      >
+                        {slide.isActive ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEdit(slide)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:border-primary hover:text-primary"
+                        title="Edit Slide"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSlide(slide.id, slide.title)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400 transition-colors hover:border-red-500 hover:text-red-600"
+                        title="Delete Slide"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -236,7 +244,7 @@ export default function AdminHeroPage() {
               {editingSlide ? 'Edit Hero Slide' : 'Add New Hero Slide'}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Upload the laptop and mobile banner images and set the headline text & buttons.
+              Upload laptop (16:9) & mobile (4:5) banner images. You can leave headline text & buttons blank to show only the clean banner image.
             </DialogDescription>
           </DialogHeader>
 
@@ -253,8 +261,15 @@ export default function AdminHeroPage() {
               onChange={(url) => setFormData({ ...formData, imageMobile: url })}
             />
 
+            <div className="rounded-2xl bg-amber-50 p-3 text-[11px] text-amber-800 border border-amber-200 flex items-start gap-2">
+              <Info className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <span>
+                <strong>Image-Only Banner Tip:</strong> If you leave Title, Eyebrow, Subtitle, and Buttons blank, the frontend will show <strong>ONLY the clean banner image</strong> without any text or dark shadow overlay!
+              </span>
+            </div>
+
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase text-slate-700">Eyebrow (small tag above title)</Label>
+              <Label className="text-xs font-semibold uppercase text-slate-700">Eyebrow Tag (Optional)</Label>
               <Input
                 placeholder="e.g. Premium Fitness Equipment"
                 value={formData.eyebrow}
@@ -264,9 +279,8 @@ export default function AdminHeroPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase text-slate-700">Title</Label>
+              <Label className="text-xs font-semibold uppercase text-slate-700">Headline Title (Optional)</Label>
               <Input
-                required
                 placeholder="e.g. Train. Recover. Live Better."
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -275,10 +289,10 @@ export default function AdminHeroPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase text-slate-700">Subtitle</Label>
+              <Label className="text-xs font-semibold uppercase text-slate-700">Subtitle / Description (Optional)</Label>
               <Textarea
                 rows={2}
-                placeholder="Short supporting line under the title"
+                placeholder="Short supporting description under title"
                 value={formData.subtitle}
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                 className="bg-slate-50 border-slate-200 text-xs rounded-xl p-3 text-slate-900"
@@ -287,16 +301,16 @@ export default function AdminHeroPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase text-slate-700">Primary Button Label</Label>
+                <Label className="text-xs font-semibold uppercase text-slate-700">Primary Button Label (Optional)</Label>
                 <Input
-                  placeholder="Shop Now"
+                  placeholder="e.g. Shop Now (or leave blank)"
                   value={formData.primaryLabel}
                   onChange={(e) => setFormData({ ...formData, primaryLabel: e.target.value })}
                   className="bg-slate-50 border-slate-200 text-xs rounded-xl h-10 text-slate-900"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase text-slate-700">Primary Button Link</Label>
+                <Label className="text-xs font-semibold uppercase text-slate-700">Banner Click / Button Link</Label>
                 <Input
                   placeholder="/products"
                   value={formData.primaryHref}
@@ -308,9 +322,9 @@ export default function AdminHeroPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase text-slate-700">Secondary Button Label</Label>
+                <Label className="text-xs font-semibold uppercase text-slate-700">Secondary Button Label (Optional)</Label>
                 <Input
-                  placeholder="Explore Products"
+                  placeholder="e.g. Explore Products (or leave blank)"
                   value={formData.secondaryLabel}
                   onChange={(e) => setFormData({ ...formData, secondaryLabel: e.target.value })}
                   className="bg-slate-50 border-slate-200 text-xs rounded-xl h-10 text-slate-900"
@@ -334,7 +348,7 @@ export default function AdminHeroPage() {
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 className="rounded border-slate-300 text-primary"
               />
-              Show on homepage
+              Show on homepage hero slider
             </label>
 
             <DialogFooter className="pt-4 border-t border-slate-200 gap-2">

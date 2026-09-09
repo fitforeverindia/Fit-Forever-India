@@ -378,12 +378,12 @@ export async function getSupabaseCategories(): Promise<Category[]> {
     if (Array.isArray(data)) {
       return data.map((c) => ({
         id: c.id,
-        name: (c.name || '').trim(),
-        slug: (c.slug || '').trim(),
-        description: (c.description || '').trim(),
-        image: c.image_url ? c.image_url.trim() : '',
-        bannerImage: c.banner_url ? c.banner_url.trim() : '',
-        bannerImageMobile: c.banner_url_mobile ? c.banner_url_mobile.trim() : '',
+        name: c.name,
+        slug: c.slug,
+        description: c.description || '',
+        image: c.image_url || '',
+        bannerImage: c.banner_url || '',
+        bannerImageMobile: c.banner_url_mobile || '',
       }));
     }
     return [];
@@ -395,17 +395,13 @@ export async function getSupabaseCategories(): Promise<Category[]> {
 
 export async function createSupabaseCategory(c: Category): Promise<Category[]> {
   try {
-    const trimmedName = (c.name || '').trim();
-    const rawSlug = (c.slug || '').trim();
-    const slug = (rawSlug || trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')).toLowerCase();
-
     const row: any = {
-      name: trimmedName,
-      slug: slug,
-      description: (c.description || '').trim() || null,
-      image_url: c.image ? c.image.trim() : null,
-      banner_url: c.bannerImage ? c.bannerImage.trim() : null,
-      banner_url_mobile: c.bannerImageMobile ? c.bannerImageMobile.trim() : null,
+      name: c.name,
+      slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      description: c.description || null,
+      image_url: c.image || null,
+      banner_url: c.bannerImage || null,
+      banner_url_mobile: c.bannerImageMobile || null,
     };
     if (isValidUUID(c.id)) {
       row.id = c.id;
@@ -425,12 +421,12 @@ export async function createSupabaseCategory(c: Category): Promise<Category[]> {
 export async function updateSupabaseCategory(id: string, updated: Partial<Category>): Promise<Category[]> {
   try {
     const patch: any = {};
-    if (updated.name !== undefined) patch.name = (updated.name || '').trim();
-    if (updated.slug !== undefined) patch.slug = (updated.slug || '').trim().toLowerCase();
-    if (updated.description !== undefined) patch.description = (updated.description || '').trim() || null;
-    if (updated.image !== undefined) patch.image_url = updated.image ? updated.image.trim() : null;
-    if (updated.bannerImage !== undefined) patch.banner_url = updated.bannerImage ? updated.bannerImage.trim() : null;
-    if (updated.bannerImageMobile !== undefined) patch.banner_url_mobile = updated.bannerImageMobile ? updated.bannerImageMobile.trim() : null;
+    if (updated.name !== undefined) patch.name = updated.name;
+    if (updated.slug !== undefined) patch.slug = updated.slug;
+    if (updated.description !== undefined) patch.description = updated.description;
+    if (updated.image !== undefined) patch.image_url = updated.image;
+    if (updated.bannerImage !== undefined) patch.banner_url = updated.bannerImage;
+    if (updated.bannerImageMobile !== undefined) patch.banner_url_mobile = updated.bannerImageMobile;
 
     if (isValidUUID(id)) {
       const { error } = await supabase.from('product_categories').update(patch).eq('id', id);

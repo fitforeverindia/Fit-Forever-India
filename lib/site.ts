@@ -1,6 +1,6 @@
 export const SITE = {
   name: 'Fit Forever India',
-  tagline: 'Premium Fitness & Wellness Equipment',
+  tagline: 'Premier Luxury Wellness Engineering & Healthcare Innovation',
   email: 'Hasan.zaid1988@gmail.com',
   phones: ['+91 8881098786', '+91 8181098786'],
   headOfficePhone: '+91 7007418046',
@@ -19,18 +19,20 @@ export const NAV_LINKS = [
 ] as const;
 
 export const CATEGORIES = [
-  { name: 'Massage Chairs', slug: 'massage-chairs', description: 'Full-body relaxation and recovery' },
-  { name: 'Leg Massager', slug: 'leg-massager', description: 'Targeted relief for tired legs' },
-  { name: 'Foot Massager', slug: 'foot-massager', description: 'Soothe and revive your feet' },
-  { name: 'Health Mate', slug: 'health-mate', description: 'Wellness companions for daily care' },
+  { name: '4D Massage Chair', slug: '4d-massage-chair', description: 'Intelligent zero-gravity robotic 4D massage chairs' },
+  { name: 'Massage Chairs', slug: 'massage-chairs', description: 'Full-body luxury relaxation and recovery' },
+  { name: 'Foot Massager', slug: 'foot-massager', description: 'Soothe and revive your feet with reflexology' },
+  { name: 'Leg Massager', slug: 'leg-massager', description: 'Targeted air-compression relief for tired legs' },
+  { name: 'Healthmate', slug: 'health-mate', description: 'Personal care wellness companions' },
+  { name: 'Treadmill', slug: 'treadmill', description: 'High-performance running & cardio for home' },
   { name: 'JogPad', slug: 'jogpad', description: 'Compact walking and jogging solutions' },
-  { name: 'Treadmill', slug: 'treadmill', description: 'Performance running for home' },
   { name: 'Spin Bike', slug: 'spin-bike', description: 'Studio-grade indoor cycling' },
   { name: 'Home Gym', slug: 'home-gym', description: 'All-in-one strength training' },
-  { name: 'Handy Body Massager', slug: 'handy-body-massager', description: 'Acupressure on the go' },
+  { name: 'Handy Body Massager', slug: 'handy-body-massager', description: 'Acupressure percussion on the go' },
 ] as const;
 
 export const CATEGORY_IMAGES: Record<string, string> = {
+  '4d-massage-chair': 'https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/45ip-Left-Side-View-scaled-1_qhfnzf.jpg',
   'massage-chairs': 'https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/45ip-Left-Side-View-scaled-1_qhfnzf.jpg',
   'leg-massager': 'https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/Leg_massager_yrusy1.jpg',
   'foot-massager': 'https://res.cloudinary.com/ufptbplr/image/upload/v1785999891/foot_kfjl1b.jpg',

@@ -47,7 +47,7 @@ function mapRow(row: ProductRow): Product {
 export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from('product_categories')
-    .select('id, name, slug, description, image_url, banner_url, banner_url_mobile')
+    .select('id, name, slug, description, image_url')
     .order('created_at', { ascending: false });
 
   if (error || !data) {
@@ -56,20 +56,18 @@ export async function getCategories(): Promise<Category[]> {
 
   return data.map((c) => ({
     id: c.id,
-    name: (c.name || '').trim(),
-    slug: (c.slug || '').trim(),
-    description: (c.description || '').trim(),
-    image: c.image_url ? c.image_url.trim() : '',
-    bannerImage: c.banner_url ? c.banner_url.trim() : '',
-    bannerImageMobile: c.banner_url_mobile ? c.banner_url_mobile.trim() : '',
+    name: c.name,
+    slug: c.slug,
+    description: c.description || '',
+    image: c.image_url ?? '',
   }));
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const { data, error } = await supabase
     .from('product_categories')
-    .select('id, name, slug, description, image_url, banner_url, banner_url_mobile')
-    .eq('slug', slug.trim())
+    .select('id, name, slug, description, image_url')
+    .eq('slug', slug)
     .maybeSingle();
 
   if (error || !data) {
@@ -78,12 +76,10 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 
   return {
     id: data.id,
-    name: (data.name || '').trim(),
-    slug: (data.slug || '').trim(),
-    description: (data.description || '').trim(),
-    image: data.image_url ? data.image_url.trim() : '',
-    bannerImage: data.banner_url ? data.banner_url.trim() : '',
-    bannerImageMobile: data.banner_url_mobile ? data.banner_url_mobile.trim() : '',
+    name: data.name,
+    slug: data.slug,
+    description: data.description || '',
+    image: data.image_url ?? '',
   };
 }
 

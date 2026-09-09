@@ -80,7 +80,7 @@ export type Product = {
 export type HeroSlide = {
   id: string;
   eyebrow?: string | null;
-  title: string;
+  title?: string | null;
   subtitle?: string | null;
   imageDesktop?: string | null;
   imageMobile?: string | null;

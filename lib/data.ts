@@ -389,11 +389,42 @@ export const TESTIMONIALS: Testimonial[] = [
 ];
 
 export const FAQS: Faq[] = [
-  { id: 'f1', question: 'Do you offer installation and demo?', answer: 'Yes. Every large equipment order includes free installation and a guided demo by our trained technicians in serviced cities.' },
-  { id: 'f2', question: 'What warranty do Fit Forever products carry?', answer: 'Warranty ranges from 1 to 3 years depending on the product, covering manufacturing defects. Extended coverage is available at checkout.' },
-  { id: 'f3', question: 'How is servicing handled after purchase?', answer: 'We operate service centers across major malls and cities. You can book a service visit through any outlet or our contact line.' },
-  { id: 'f4', question: 'Are financing or EMI options available?', answer: 'Yes, easy EMI options are available on most equipment through major banks and payment partners at checkout.' },
-  { id: 'f5', question: 'Can I try equipment before buying?', answer: 'Absolutely. Visit any of our outlet and service points to experience products before you purchase.' },
+  {
+    id: 'f1',
+    question: 'What makes Fit Forever 4D Massage Chairs different from standard massage chairs?',
+    answer:
+      'Fit Forever 4D Luxury Massage Chairs feature intelligent optical body scanning, zero-gravity positioning, 137cm SL-Track guide rails, and multi-axis 4D rollers that simulate therapeutic human hands with graphene lumbar warmth therapy.',
+  },
+  {
+    id: 'f2',
+    question: 'What are the benefits of using a Fit Forever Foot Massager and Leg Massager?',
+    answer:
+      'Our Foot Massager and Leg Massager products utilize 3D surround airbag compression, triple-row plantar acupressure rollers, and infrared heat therapy to boost circulation, reduce stiffness, and soothe tired legs.',
+  },
+  {
+    id: 'f3',
+    question: 'How does the Healthmate series support everyday wellness at home?',
+    answer:
+      'The Fit Forever Healthmate collection provides compact vibration therapy, biometric posture support, and daily relaxation companions engineered for home and corporate wellness spaces.',
+  },
+  {
+    id: 'f4',
+    question: 'What features should I look for when buying a Fit Forever Treadmill?',
+    answer:
+      'Our Motorized Treadmill range features commercial-grade heavy peak HP motors, multi-layer shock-cushioned decks, automatic incline levels, and smart workout tracking for high-performance home cardio.',
+  },
+  {
+    id: 'f5',
+    question: 'Do you offer doorstep installation, demo, and pan-India warranty?',
+    answer:
+      'Yes. Every equipment purchase includes doorstep delivery, professional technician installation, guided operational demo, and up to 3 years of comprehensive on-site warranty across India.',
+  },
+  {
+    id: 'f6',
+    question: 'Are easy EMI and financing options available?',
+    answer:
+      'Yes, flexible no-cost EMI and financing options are available through major banks and credit card providers at checkout.',
+  },
 ];
 
 export const GALLERY_ITEMS: GalleryItem[] = [

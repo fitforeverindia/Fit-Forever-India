@@ -25,28 +25,33 @@ const display = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Fit Forever India — Premium Fitness & Wellness Equipment',
+    default: 'Fit Forever India — 4D Massage Chairs, Foot Massager, Leg Massager, Healthmate & Treadmills',
     template: '%s | Fit Forever India',
   },
   description:
-    'Shop premium massage chairs, treadmills, spin bikes, home gyms and wellness equipment from Fit Forever India. Manufacturer-direct quality with nationwide service.',
+    'Fit Forever India is the premier manufacturer and supplier of 4D luxury massage chairs, leg massagers, foot massagers, Healthmate wellness companions, and motorized treadmills with pan-India warranty.',
   icons: {
     icon: SITE.logo,
     shortcut: SITE.logo,
     apple: SITE.logo,
   },
   keywords: [
-    'fitness equipment India',
-    'massage chair',
-    'treadmill',
-    'spin bike',
-    'home gym',
+    'Massage chairs',
+    '4D Massage Chair',
+    'Foot massager',
+    'Leg massager',
+    'Healthmate',
+    'Health Mate',
+    'Treadmill',
     'Fit Forever India',
+    'robotic massage chair India',
+    'luxury wellness engineering',
+    'home gym equipment',
   ],
   openGraph: {
-    title: 'Fit Forever India — Premium Fitness & Wellness Equipment',
+    title: 'Fit Forever India — 4D Massage Chairs, Foot & Leg Massagers, Healthmate & Treadmills',
     description:
-      'Premium massage chairs, treadmills, spin bikes and wellness equipment. Manufacturer-direct quality with nationwide service.',
+      'Premier luxury wellness engineering & health-care innovation. Shop 4D massage chairs, foot massagers, leg massagers, Healthmate and treadmills.',
     type: 'website',
     images: [
       {
@@ -59,11 +64,44 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    title: 'Fit Forever India — 4D Massage Chairs, Foot & Leg Massagers, Healthmate & Treadmills',
+    description:
+      'Premier luxury wellness engineering & health-care innovation. 4D massage chairs, foot massagers, leg massagers, Healthmate and treadmills.',
     images: [
       {
         url: 'https://res.cloudinary.com/ufptbplr/image/upload/v1785996171/Fit_Forever_Logo_page-0001_gglf4q.jpg',
       },
     ],
+  },
+};
+
+const jsonLdOrganization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Fit Forever India',
+  url: 'https://fitforever.in',
+  logo: SITE.logo,
+  description:
+    'Nation’s premier destination for luxury wellness engineering and elite health-care innovation. Manufacturer of 4D luxury massage chairs, foot massagers, leg massagers, Healthmate wellness tech, and motorized treadmills.',
+  telephone: SITE.headOfficePhone,
+  email: SITE.email,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: SITE.headOfficeCity,
+    addressCountry: 'IN',
+  },
+  sameAs: [SITE.instagram],
+};
+
+const jsonLdWebSite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Fit Forever India',
+  url: 'https://fitforever.in',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://fitforever.in/products?search={search_term_string}',
+    'query-input': 'required name=search_term_string',
   },
 };
 
@@ -73,7 +111,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
+        />
+      </head>
       <body className="font-sans antialiased min-h-screen flex flex-col">
         <AdminAuthProvider>
           <CustomerAuthProvider>
@@ -92,4 +140,3 @@ export default function RootLayout({
     </html>
   );
 }
-

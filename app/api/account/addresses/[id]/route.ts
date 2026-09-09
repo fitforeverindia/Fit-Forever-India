@@ -12,10 +12,10 @@ if (!globalStore.inMemoryAddresses) {
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
     const { customerId, action, ...updatedFields } = body;
 
@@ -76,10 +76,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId') || request.headers.get('x-customer-id');
 

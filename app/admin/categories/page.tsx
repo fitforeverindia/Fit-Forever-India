@@ -120,34 +120,31 @@ export default function AdminCategoriesPage() {
       }
     }
 
-    const trimmedName = formData.name.trim();
-    const rawSlug = formData.slug ? formData.slug.trim() : '';
-    const generatedSlug = (
-      rawSlug || trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-    ).toLowerCase();
+    const generatedSlug =
+      formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
     if (editingCategory) {
       await updateCategory(editingCategory.id, {
-        name: trimmedName,
+        name: formData.name,
         slug: generatedSlug,
-        description: (formData.description || '').trim(),
-        image: finalImage ? finalImage.trim() : '',
-        bannerImage: finalBanner ? finalBanner.trim() : '',
-        bannerImageMobile: finalBannerMobile ? finalBannerMobile.trim() : '',
+        description: formData.description,
+        image: finalImage,
+        bannerImage: finalBanner,
+        bannerImageMobile: finalBannerMobile,
       });
-      toast.success(`Category "${trimmedName}" updated successfully!`, { id: toastId });
+      toast.success(`Category "${formData.name}" updated successfully!`, { id: toastId });
     } else {
       const newCat: Category = {
         id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cat-${Date.now()}`,
-        name: trimmedName,
+        name: formData.name,
         slug: generatedSlug,
-        description: (formData.description || '').trim(),
-        image: finalImage ? finalImage.trim() : '',
-        bannerImage: finalBanner ? finalBanner.trim() : '',
-        bannerImageMobile: finalBannerMobile ? finalBannerMobile.trim() : '',
+        description: formData.description,
+        image: finalImage,
+        bannerImage: finalBanner,
+        bannerImageMobile: finalBannerMobile,
       };
       await addCategory(newCat);
-      toast.success(`Created new category "${trimmedName}"!`, { id: toastId });
+      toast.success(`Created new category "${formData.name}"!`, { id: toastId });
     }
 
     setIsModalOpen(false);

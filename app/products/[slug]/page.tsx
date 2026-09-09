@@ -243,13 +243,11 @@ export default function ProductDetailPage() {
         const res = await fetch('/api/products');
         const list = await res.json();
         if (Array.isArray(list) && isMounted) {
-          const cleanDecoded = decodedSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
           const match = list.find(
             (p: Product) =>
               p.slug === decodedSlug ||
               p.id === decodedSlug ||
-              p.slug.toLowerCase() === decodedSlug.toLowerCase() ||
-              (p.slug && p.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanDecoded)
+              p.slug.toLowerCase() === decodedSlug.toLowerCase()
           );
           if (match) {
             setFetchedProduct(match);
@@ -700,14 +698,10 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="pt-6">
-            {/* TAB 1: DESCRIPTION */}
+            {/* TAB 1: DESCRIPTION — render exact HTML from PowerMax when available */}
             {activeTab === 'description' && (
               <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
-                {product.description && (product.description.includes('![') || !product.descriptionHtml || product.description.length > 300) ? (
-                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
-                    <MarkdownLite text={product.description} />
-                  </div>
-                ) : product.descriptionHtml ? (
+                {product.descriptionHtml ? (
                   <div
                     className="prose prose-slate dark:prose-invert max-w-none [&_img]:rounded-xl [&_img]:border [&_img]:border-slate-200 [&_img]:dark:border-slate-800 [&_img]:my-4 [&_img]:w-full [&_img]:object-cover"
                     dangerouslySetInnerHTML={{ __html: product.descriptionHtml.replace(/<img /g, '<img referrerpolicy="no-referrer" ') }}
@@ -758,74 +752,86 @@ export default function ProductDetailPage() {
                         ['Package Dimensions', product.packageSize || '150 x 80 x 120 cm'],
                       ]}
                     />
-
-                    {product.specifications && product.specifications.length > 0 && (
-                      <>
-                        <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white">
-                          Product Specifications
-                        </h3>
-                        <SpecTable rows={product.specifications.map((s) => [s.label, s.value])} />
-                      </>
-                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* TAB 3: WARRANTY — Clean standardized warranty layout matching design template */}
+            {/* TAB 3: WARRANTY — render exact HTML from PowerMax when available */}
             {activeTab === 'logistics' && (
-              <div className="space-y-6 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
-                <div className="space-y-2">
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2]" />
-                    {product.warranty || '1–Year Manufacturer Warranty'}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Covers manufacturing defects and on-site technical support for the warranty period from the date of purchase.
-                  </p>
-                </div>
+              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                {product.warrantyHtml ? (
+                  <div
+                    className="prose prose-slate dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: product.warrantyHtml }}
+                  />
+                ) : (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3">
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                      {product.warranty || '3 Years On-Site Comprehensive Warranty'}
+                    </h3>
+                    <p>
+                      Covers manufacturing defects and on-site technical support for the warranty period from the date
+                      of purchase.
+                    </p>
+                  </div>
+                )}
 
-                {/* Sales CTA + 4 Trust Badges Container */}
-                <div className="not-prose rounded-2xl border border-slate-100 bg-slate-50/70 p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900/50">
+                {/* Certifications */}
+                {product.certifications && product.certifications.length > 0 && (
+                  <div className="prose prose-slate dark:prose-invert max-w-none space-y-3 mt-6">
+                    <h3 className="mt-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+                      Quality Assurance & Certifications
+                    </h3>
+                    <ul className="list-disc space-y-1.5 pl-5">
+                      {product.certifications.map((cert) => (
+                        <li key={cert} className="text-slate-700 dark:text-slate-300">
+                          {cert}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Sales CTA + Trust Badges */}
+                <div className="not-prose mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
                   <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                     Still Confused? Call Sales at{' '}
                     <a
                       href={`tel:${SITE.phones[0].replace(/\s+/g, '')}`}
-                      className="text-emerald-600 hover:underline dark:text-emerald-400 font-bold"
+                      className="text-primary hover:underline"
                     >
                       {SITE.phones[0]}
                     </a>
                   </h3>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     Call our sales team for queries and better assistance. Our sales team will guide you to buy the
                     best suitable fitness equipment.
                   </p>
 
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-950">
-                      <Truck className="h-6 w-6 text-slate-800 dark:text-slate-200 stroke-[1.5]" />
+                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Truck className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                       <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">
                         Nationwide Service Network
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">On-site service anywhere in India</p>
+                      <p className="text-xs text-slate-500">On-site service anywhere in India</p>
                     </div>
-
-                    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-950">
-                      <Award className="h-6 w-6 text-slate-800 dark:text-slate-200 stroke-[1.5]" />
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Award className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                       <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Certified Products</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">CE, GS, RoHS certified products</p>
+                      <p className="text-xs text-slate-500">CE, GS, RoHS certified products</p>
                     </div>
-
-                    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-950">
-                      <Phone className="h-6 w-6 text-slate-800 dark:text-slate-200 stroke-[1.5]" />
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Phone className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                       <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Customer Support</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Call us on {SITE.headOfficePhone}</p>
+                      <p className="text-xs text-slate-500">Call us on {SITE.headOfficePhone}</p>
                     </div>
-
-                    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-950">
-                      <Box className="h-6 w-6 text-slate-800 dark:text-slate-200 stroke-[1.5]" />
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <Box className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                       <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">Free Delivery</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Free & lightning fast delivery</p>
+                      <p className="text-xs text-slate-500">Free & lightning fast delivery</p>
                     </div>
                   </div>
                 </div>
