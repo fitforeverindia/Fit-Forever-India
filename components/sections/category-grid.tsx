@@ -22,7 +22,7 @@ export function CategoryGrid({ categories: initialCategories }: { categories?: C
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
             Discover Your Favorites
           </span>
-          <h2 className="mt-1 font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-foreground sm:text-3xl lg:text-4xl">
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">
             Explore by Category
           </h2>
         </div>
